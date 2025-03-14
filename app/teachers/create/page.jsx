@@ -23,6 +23,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function Page() {
   const {
@@ -31,13 +36,41 @@ export default function Page() {
     reset,
     watch,
     setValue,
-    formState: { errors },
+    setError,
+    formState: { errors, isSubmitting },
   } = useForm({});
 
-  const onSubmit = (data) => {
-    console.log(data);
+  const router = useRouter();
+  const token = localStorage.getItem("token");
 
-    alert("Teacher added successfully!");
+  const onSubmit = async (data) => {
+    const { teacherId, ...formData } = data;
+
+    const formattedData = {
+      ...formData,
+      uniqueId: teacherId,
+      age: parseInt(data.age, 10),
+      role: "Teacher",
+    };
+
+    try {
+      const response = await axios.post(`${API_URL}/api/users`, formattedData, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Send token as Bearer
+        },
+      });
+
+      router.push("/teachers");
+    } catch (error) {
+      if (error.response == 409) {
+        setError("teacherId", {
+          type: "manual",
+          message: "Id already exist",
+        });
+      } else {
+        console.log(error);
+      }
+    }
   };
 
   return (
@@ -205,12 +238,16 @@ export default function Page() {
 
           {/* Submit & Cancel Buttons */}
           <div className="flex justify-end gap-2">
-            <Button variant="outline" type="button" onClick={() => reset()}>
-              Cancel
-            </Button>
-            <Button type="submit" className="bg-primary text-white">
-              Add Teacher
-            </Button>
+            {isSubmitting ? (
+              <Button type="submit" className="" disabled={true}>
+                <Loader2 className="animate-spin" />
+                Adding...
+              </Button>
+            ) : (
+              <Button type="submit" className="">
+                Add Teacher
+              </Button>
+            )}
           </div>
         </form>
       </div>

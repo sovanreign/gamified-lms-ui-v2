@@ -67,32 +67,32 @@ const data = {
   projects: [
     {
       name: "Home",
-      url: "#",
+      url: "/home",
       icon: FaHome,
     },
     {
       name: "Teachers",
-      url: "#",
+      url: "/teachers",
       icon: FaChalkboardTeacher,
     },
     {
       name: "Students",
-      url: "#",
+      url: "/students",
       icon: FaChild,
     },
     {
       name: "Lessons",
-      url: "#",
+      url: "/modules",
       icon: FaBook,
     },
     {
       name: "Videos",
-      url: "#",
+      url: "/videos",
       icon: FaVideo,
     },
     {
       name: "Activities",
-      url: "#",
+      url: "/activities",
       icon: FaGamepad,
     },
   ],

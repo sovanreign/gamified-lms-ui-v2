@@ -25,9 +25,15 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useRouter } from "next/navigation";
 
 export function NavUser({ user }) {
   const { isMobile } = useSidebar();
+
+  const username = localStorage.getItem("username");
+  const role = localStorage.getItem("role");
+
+  const router = useRouter();
 
   return (
     <SidebarMenu>
@@ -43,8 +49,8 @@ export function NavUser({ user }) {
                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">Administrator</span>
-                <span className="truncate text-xs">23-0228</span>
+                <span className="truncate font-semibold">{username}</span>
+                <span className="truncate text-xs">{role}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -74,7 +80,12 @@ export function NavUser({ user }) {
                 <BadgeCheck />
                 View Profile
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  localStorage.clear();
+                  router.push("/login");
+                }}
+              >
                 <LogOut />
                 Log out
               </DropdownMenuItem>

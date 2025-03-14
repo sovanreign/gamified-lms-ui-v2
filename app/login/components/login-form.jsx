@@ -1,16 +1,15 @@
 "use client";
 
 import { useForm } from "react-hook-form";
+import axios from "axios";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-
-const user = {
-  username: "admin",
-  password: "password",
-};
+import { jwtDecode } from "jwt-decode";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 export function LoginForm({ className, ...props }) {
   const {
@@ -21,11 +20,26 @@ export function LoginForm({ className, ...props }) {
     formState: { errors, isSubmitting },
   } = useForm();
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+  const router = useRouter();
+
   const onSubmit = async (data) => {
-    if (user.username == data.username && user.password == data.password) {
-      alert("Success");
-    } else {
-      reset();
+    try {
+      const response = await axios.post(`${API_URL}/api/auth/login`, data);
+
+      const decoded = jwtDecode(response.data.access_token);
+      localStorage.setItem("token", response.data.access_token);
+      localStorage.setItem("id", decoded.id);
+      localStorage.setItem("username", decoded.username);
+      localStorage.setItem("role", decoded.role);
+
+      router.push("/home");
+    } catch (error) {
+      console.log(error);
+
+      reset(); // Reset form fields
+
       setError("username", {
         type: "manual",
         message: "Incorrect username or password",
@@ -44,7 +58,7 @@ export function LoginForm({ className, ...props }) {
           <div className="flex flex-col items-center gap-2 text-center">
             <h1 className="text-2xl font-bold">Welcome back</h1>
             <p className="text-sm text-muted-foreground">
-              Please login to your account to continue
+              Please login to your account to continue {API_URL}
             </p>
           </div>
 
@@ -86,9 +100,16 @@ export function LoginForm({ className, ...props }) {
             </div>
 
             {/* Submit Button */}
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Logging in..." : "Login"}
-            </Button>
+            {isSubmitting ? (
+              <Button type="submit" className="w-full" disabled={true}>
+                <Loader2 className="animate-spin" />
+                Logging in...
+              </Button>
+            ) : (
+              <Button type="submit" className="w-full">
+                Login
+              </Button>
+            )}
           </div>
         </form>
       </CardContent>

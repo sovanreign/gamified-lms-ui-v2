@@ -18,9 +18,12 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useRouter } from "next/navigation";
 
 export function NavProjects({ projects }) {
   const { isMobile } = useSidebar();
+
+  const router = useRouter();
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -28,7 +31,7 @@ export function NavProjects({ projects }) {
         {projects.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild>
-              <a href={item.url}>
+              <a onClick={() => router.push(item.url)}>
                 <item.icon />
                 <span>{item.name}</span>
               </a>

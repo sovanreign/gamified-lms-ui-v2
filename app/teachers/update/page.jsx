@@ -24,6 +24,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import axios from "axios";
 
 // Dummy data stored inside the page
 const teacherData = {
@@ -39,6 +41,10 @@ const teacherData = {
   teacherId: "TCH-2024-001",
 };
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const token =
+  typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
 export default function Page() {
   const {
     register,
@@ -51,16 +57,58 @@ export default function Page() {
     defaultValues: teacherData,
   });
 
-  // Prefill form when component mounts
-  useEffect(() => {
-    Object.keys(teacherData).forEach((key) => {
-      setValue(key, teacherData[key]);
-    });
-  }, [setValue]);
+  const router = useRouter();
+  const params = useSearchParams();
+  const teacherId = params.get("teacherId");
 
-  const onSubmit = (data) => {
-    console.log("Updated Data:", data);
-    alert("Teacher updated successfully!");
+  useEffect(() => {
+    const fetchTeacher = async () => {
+      if (!teacherId) return;
+
+      try {
+        const response = await axios.get(`${API_URL}/api/users/${teacherId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const teacherData = response.data;
+        Object.keys(teacherData).forEach((key) =>
+          setValue(key, teacherData[key])
+        );
+      } catch (error) {
+        console.error("Failed to fetch teacher data:", error);
+      }
+    };
+
+    fetchTeacher();
+  }, [teacherId, setValue]);
+
+  const onSubmit = async (data) => {
+    let { password, ...newData } = data; // Destructure password
+
+    // Remove password from request if it's empty
+    if (password) {
+      newData = { ...newData, password };
+    }
+    try {
+      const response = await axios.patch(
+        `${API_URL}/api/users/${teacherId}`,
+        newData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        router.push("/teachers");
+      }
+    } catch (error) {
+      alert("Failed to update teacher. Please try again.");
+      console.log(error);
+    }
   };
 
   return (
@@ -216,9 +264,9 @@ export default function Page() {
             <Input
               id="teacherId"
               placeholder="Enter teacher ID"
-              {...register("teacherId", { required: true })}
+              {...register("uniqueId", { required: true })}
             />
-            {errors.teacherId && (
+            {errors.uniqueId && (
               <p className="text-red-500 text-sm">Teacher ID is required</p>
             )}
           </div>
