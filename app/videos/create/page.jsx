@@ -2,28 +2,19 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import Body from "@/components/body";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import Header from "@/components/header";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import axios from "axios";
+import { createVideo } from "@/lib/api/videos"; // ✅ API function for creating a video
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-// Function to extract YouTube video ID
+// Extract YouTube Video ID
 const getYouTubeId = (url) => {
   const match = url.match(
     /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/ ]{11})/
@@ -31,72 +22,58 @@ const getYouTubeId = (url) => {
   return match ? match[1] : null;
 };
 
-export default function Page() {
+export default function CreateVideoPage() {
   const {
     register,
     handleSubmit,
     watch,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm();
-
+  const router = useRouter();
   const [videoId, setVideoId] = useState(null);
 
-  const router = useRouter();
-
-  // Watch for changes in the YouTube link field
+  // Watch YouTube Link
   const youtubeLink = watch("link");
 
-  // Update preview when link changes
+  // Update YouTube Thumbnail
   const handleLinkChange = (e) => {
     const link = e.target.value;
     setValue("link", link);
-    const id = getYouTubeId(link);
-    setVideoId(id);
+    setVideoId(getYouTubeId(link));
   };
 
-  const onSubmit = async (data) => {
-    const token = localStorage.getItem("token");
+  // ✅ React Query Mutation for Creating Video
+  const mutation = useMutation({
+    mutationFn: createVideo,
+    onSuccess: () => {
+      toast.success("Video added successfully.");
+      router.push("/videos");
+    },
+    onError: () => {
+      toast.error("Failed to add video.");
+    },
+  });
 
-    try {
-      // Send POST request to API
-      const response = await axios.post(`${API_URL}/api/videos`, data, {
-        headers: {
-          Authorization: `Bearer ${token}`, // Attach token
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (response.status === 201) {
-        router.push("/videos");
-      } else {
-        alert("Something went wrong.");
-      }
-    } catch (error) {
-      console.error("Error adding video material:", error);
-      alert("Failed to add video material.");
+  const onSubmit = (data) => {
+    if (!videoId) {
+      toast.error("Invalid YouTube link.");
+      return;
     }
+    mutation.mutate(data);
   };
 
   return (
     <Body>
-      <header className="flex h-16 shrink-0 items-center gap-2 px-4 transition-[width,height] ease-linear">
-        <SidebarTrigger className="-ml-1" />
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem className="hidden md:block">
-              <BreadcrumbLink href="/videos">Videos</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem className="hidden md:block">
-              <BreadcrumbPage>Create</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      </header>
+      <Header
+        breadcrumbs={[
+          { label: "Videos", href: "/videos" },
+          { label: "Create" },
+        ]}
+      />
 
       {/* Video Upload Form */}
-      <div className="flex flex-1 flex-col gap-4 p-6 ">
+      <div className="flex flex-1 flex-col gap-4 p-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 w-full">
           {/* Video Name */}
           <div>
@@ -159,16 +136,16 @@ export default function Page() {
 
           {/* Submit Button */}
           <div className="flex justify-end">
-            {isSubmitting ? (
-              <Button type="submit" className="" disabled={true}>
-                <Loader2 className="animate-spin" />
-                Adding...
-              </Button>
-            ) : (
-              <Button type="submit" className="">
-                Add Video
-              </Button>
-            )}
+            <Button type="submit" disabled={mutation.isPending}>
+              {mutation.isPending ? (
+                <>
+                  <Loader2 className="animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                "Add Video"
+              )}
+            </Button>
           </div>
         </form>
       </div>
