@@ -1,17 +1,10 @@
 "use client";
 
 import { useForm } from "react-hook-form";
+import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { createTeacher } from "@/lib/api/teachers";
 import Body from "@/components/body";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -22,105 +15,89 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import axios from "axios";
-import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import Header from "@/components/header";
+import { toast } from "sonner";
 
 export default function Page() {
   const {
     register,
     handleSubmit,
-    reset,
     watch,
     setValue,
     setError,
-    formState: { errors, isSubmitting },
-  } = useForm({});
+    formState: { errors },
+  } = useForm();
 
   const router = useRouter();
-  const token = localStorage.getItem("token");
 
-  const onSubmit = async (data) => {
-    const { teacherId, ...formData } = data;
-
-    const formattedData = {
-      ...formData,
-      uniqueId: teacherId,
-      age: parseInt(data.age, 10),
-      role: "Teacher",
-    };
-
-    try {
-      const response = await axios.post(`${API_URL}/api/users`, formattedData, {
-        headers: {
-          Authorization: `Bearer ${token}`, // Send token as Bearer
-        },
-      });
-
+  const mutation = useMutation({
+    mutationFn: createTeacher,
+    onSuccess: () => {
+      toast.success("Teacher created successfully.");
       router.push("/teachers");
-    } catch (error) {
-      if (error.response == 409) {
-        setError("teacherId", {
-          type: "manual",
-          message: "Id already exist",
+    },
+    onError: (error) => {
+      if (error.response?.status === 409) {
+        toast.error("Error", {
+          description: "Some field already exists!",
         });
       } else {
         console.log(error);
       }
-    }
+    },
+  });
+
+  const onSubmit = (data) => {
+    const formattedData = {
+      ...data,
+      age: parseInt(data.age, 10),
+      role: "Teacher",
+    };
+
+    mutation.mutate(formattedData);
   };
 
   return (
     <Body>
-      <header className="flex h-16 shrink-0 items-center gap-2 px-4 transition-[width,height] ease-linear">
-        <SidebarTrigger className="-ml-1" />
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem className="hidden md:block">
-              <BreadcrumbLink href="/teachers">Teachers</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem className="hidden md:block">
-              <BreadcrumbPage>Create</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      </header>
+      <Header
+        breadcrumbs={[
+          { label: "Teachers", href: "/teachers" },
+          { label: "Create" },
+        ]}
+      />
 
-      <div className="flex flex-1 flex-col items-center justify-center p-6">
+      <div className="flex flex-1 flex-col items-center p-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 w-full">
-          {/* Username */}
-          <div className="space-y-1">
-            <Label htmlFor="username">Username</Label>
-            <Input
-              id="username"
-              placeholder="Enter username"
-              {...register("username", { required: true })}
-            />
-            {errors.username && (
-              <p className="text-red-500 text-sm">Username is required</p>
-            )}
-          </div>
-
-          {/* Password */}
-          <div className="space-y-1">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Enter password"
-              {...register("password", { required: true })}
-            />
-            {errors.password && (
-              <p className="text-red-500 text-sm">Password is required</p>
-            )}
+          {/* Username & Password */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                placeholder="Enter username"
+                {...register("username", { required: true })}
+              />
+              {errors.username && (
+                <p className="text-red-500 text-xs">Username is required</p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter password"
+                {...register("password", { required: true })}
+              />
+              {errors.password && (
+                <p className="text-red-500 text-xs">Password is required</p>
+              )}
+            </div>
           </div>
 
           {/* First Name & Last Name */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="space-y-1">
               <Label htmlFor="firstName">First Name</Label>
               <Input
@@ -129,7 +106,7 @@ export default function Page() {
                 {...register("firstName", { required: true })}
               />
               {errors.firstName && (
-                <p className="text-red-500 text-sm">First name is required</p>
+                <p className="text-red-500 text-xs">First name is required</p>
               )}
             </div>
             <div className="space-y-1">
@@ -140,23 +117,40 @@ export default function Page() {
                 {...register("lastName", { required: true })}
               />
               {errors.lastName && (
-                <p className="text-red-500 text-sm">Last name is required</p>
+                <p className="text-red-500 text-xs">Last name is required</p>
               )}
             </div>
           </div>
 
-          {/* Middle Name */}
-          <div className="space-y-1">
-            <Label htmlFor="middleName">Middle Name</Label>
-            <Input
-              id="middleName"
-              placeholder="Enter middle name"
-              {...register("middleName")}
-            />
+          {/* Middle Name & Teacher ID */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label htmlFor="middleName">Middle Name</Label>
+              <Input
+                id="middleName"
+                placeholder="Enter middle name"
+                {...register("middleName")}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="teacherId">Teacher ID</Label>
+              <Input
+                id="teacherId"
+                placeholder="Enter teacher ID"
+                {...register("uniqueId", {
+                  required: "Teacher ID is required",
+                })}
+              />
+              {errors.uniqueId && (
+                <p className="text-red-500 text-xs">
+                  {errors.uniqueId.message}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Age & Gender */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="space-y-1">
               <Label htmlFor="age">Age</Label>
               <Input
@@ -166,7 +160,7 @@ export default function Page() {
                 {...register("age", { required: true })}
               />
               {errors.age && (
-                <p className="text-red-500 text-sm">Age must be at least 18</p>
+                <p className="text-red-500 text-xs">Age is required</p>
               )}
             </div>
             <div className="space-y-1">
@@ -188,66 +182,53 @@ export default function Page() {
                 </SelectContent>
               </Select>
               {errors.gender && (
-                <p className="text-red-500 text-sm">Gender is required</p>
+                <p className="text-red-500 text-xs">{errors.gender?.message}</p>
               )}
             </div>
           </div>
 
-          {/* Address */}
-          <div className="space-y-1">
-            <Label htmlFor="address">Address</Label>
-            <Input
-              id="address"
-              placeholder="Enter address"
-              {...register("address", { required: true })}
-            />
-            {errors.address && (
-              <p className="text-red-500 text-sm">Address is required</p>
-            )}
-          </div>
-
-          {/* Email */}
-          <div className="space-y-1">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="Enter email"
-              {...register("email", {
-                required: true,
-                pattern: /^\S+@\S+\.\S+$/,
-              })}
-            />
-            {errors.email && (
-              <p className="text-red-500 text-sm">Invalid email format</p>
-            )}
-          </div>
-
-          {/* Teacher ID */}
-          <div className="space-y-1">
-            <Label htmlFor="teacherId">Teacher ID</Label>
-            <Input
-              id="teacherId"
-              placeholder="Enter teacher ID"
-              {...register("teacherId", { required: true })}
-            />
-            {errors.teacherId && (
-              <p className="text-red-500 text-sm">Teacher ID is required</p>
-            )}
+          {/* Email & Address */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter email"
+                {...register("email", {
+                  required: true,
+                  pattern: /^\S+@\S+\.\S+$/,
+                })}
+              />
+              {errors.email && (
+                <p className="text-red-500 text-xs">Invalid email format</p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="address">Address</Label>
+              <Input
+                id="address"
+                placeholder="Enter address"
+                {...register("address", { required: true })}
+              />
+              {errors.address && (
+                <p className="text-red-500 text-xs">Address is required</p>
+              )}
+            </div>
           </div>
 
           {/* Submit & Cancel Buttons */}
           <div className="flex justify-end gap-2">
-            {isSubmitting ? (
-              <Button type="submit" className="" disabled={true}>
-                <Loader2 className="animate-spin" />
-                Adding...
-              </Button>
-            ) : (
-              <Button type="submit" className="">
-                Add Teacher
-              </Button>
-            )}
+            <Button type="submit" disabled={mutation.isPending}>
+              {mutation.isPending ? (
+                <>
+                  <Loader2 className="animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                "Add Teacher"
+              )}
+            </Button>
           </div>
         </form>
       </div>

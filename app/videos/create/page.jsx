@@ -17,6 +17,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import axios from "axios";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Function to extract YouTube video ID
 const getYouTubeId = (url) => {
@@ -32,10 +37,12 @@ export default function Page() {
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm();
 
   const [videoId, setVideoId] = useState(null);
+
+  const router = useRouter();
 
   // Watch for changes in the YouTube link field
   const youtubeLink = watch("link");
@@ -48,9 +55,27 @@ export default function Page() {
     setVideoId(id);
   };
 
-  const onSubmit = (data) => {
-    console.log("Submitted Video Data:", data);
-    alert("Video material added successfully!");
+  const onSubmit = async (data) => {
+    const token = localStorage.getItem("token");
+
+    try {
+      // Send POST request to API
+      const response = await axios.post(`${API_URL}/api/videos`, data, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Attach token
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.status === 201) {
+        router.push("/videos");
+      } else {
+        alert("Something went wrong.");
+      }
+    } catch (error) {
+      console.error("Error adding video material:", error);
+      alert("Failed to add video material.");
+    }
   };
 
   return (
@@ -134,9 +159,16 @@ export default function Page() {
 
           {/* Submit Button */}
           <div className="flex justify-end">
-            <Button type="submit" className="bg-primary text-white">
-              Add Video
-            </Button>
+            {isSubmitting ? (
+              <Button type="submit" className="" disabled={true}>
+                <Loader2 className="animate-spin" />
+                Adding...
+              </Button>
+            ) : (
+              <Button type="submit" className="">
+                Add Video
+              </Button>
+            )}
           </div>
         </form>
       </div>

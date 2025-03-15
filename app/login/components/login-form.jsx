@@ -1,7 +1,6 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import axios from "axios";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +9,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { jwtDecode } from "jwt-decode";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import axios from "axios";
+import { useMutation } from "@tanstack/react-query";
+import { loginUser } from "@/lib/api/auth";
 
 export function LoginForm({ className, ...props }) {
   const {
@@ -17,12 +19,32 @@ export function LoginForm({ className, ...props }) {
     handleSubmit,
     reset,
     setError,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm();
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const router = useRouter();
+
+  const mutation = useMutation({
+    mutationFn: loginUser,
+    onSuccess: (data) => {
+      const decoded = jwtDecode(data.access_token);
+      localStorage.setItem("token", data.access_token);
+      localStorage.setItem("id", decoded.id);
+      localStorage.setItem("username", decoded.username);
+      localStorage.setItem("role", decoded.role);
+
+      router.push("/home");
+    },
+    onError: () => {
+      reset();
+      setError("username", {
+        type: "manual",
+        message: "Incorrect username or password",
+      });
+    },
+  });
 
   const onSubmit = async (data) => {
     try {
@@ -51,14 +73,14 @@ export function LoginForm({ className, ...props }) {
     <Card>
       <CardContent>
         <form
-          onSubmit={handleSubmit(onSubmit)}
+          onSubmit={handleSubmit((data) => mutation.mutate(data))}
           className={cn("flex flex-col gap-6", className)}
           {...props}
         >
           <div className="flex flex-col items-center gap-2 text-center">
             <h1 className="text-2xl font-bold">Welcome back</h1>
             <p className="text-sm text-muted-foreground">
-              Please login to your account to continue {API_URL}
+              Please login to your account to continue
             </p>
           </div>
 
@@ -99,17 +121,20 @@ export function LoginForm({ className, ...props }) {
               )}
             </div>
 
-            {/* Submit Button */}
-            {isSubmitting ? (
-              <Button type="submit" className="w-full" disabled={true}>
-                <Loader2 className="animate-spin" />
-                Logging in...
-              </Button>
-            ) : (
-              <Button type="submit" className="w-full">
-                Login
-              </Button>
-            )}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={mutation.isPending}
+            >
+              {mutation.isPending ? (
+                <>
+                  <Loader2 className="animate-spin" />
+                  Logging in...
+                </>
+              ) : (
+                "Login"
+              )}
+            </Button>
           </div>
         </form>
       </CardContent>

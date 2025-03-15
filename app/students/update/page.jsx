@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import Body from "@/components/body";
 import {
@@ -24,18 +24,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
+import axios from "axios";
 
-// Dummy data stored inside the page
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const token =
+  typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
 const studentData = {
-  username: "johndoe123",
-  password: "", // Password left empty for security reasons
-  firstName: "John",
-  lastName: "Doe",
-  middleName: "Michael",
-  age: 20,
-  gender: "Male",
-  address: "456 College Road, New York, NY",
-  studentId: "STU-2024-001",
+  username: "",
+  password: "",
+  firstName: "",
+  lastName: "",
+  middleName: "",
+  age: "",
+  gender: "",
+  address: "",
+  uniqueId: "",
+  teacherId: "",
 };
 
 export default function Page() {
@@ -50,16 +56,88 @@ export default function Page() {
     defaultValues: studentData,
   });
 
-  // Prefill form when component mounts
-  useEffect(() => {
-    Object.keys(studentData).forEach((key) => {
-      setValue(key, studentData[key]);
-    });
-  }, [setValue]);
+  const searchParams = useSearchParams();
+  const studentId = searchParams.get("studentId");
 
-  const onSubmit = (data) => {
-    console.log("Updated Data:", data);
-    alert("Student updated successfully!");
+  const [teachers, setTeachers] = useState([]);
+  const [loadingTeachers, setLoadingTeachers] = useState(true);
+
+  useEffect(() => {
+    const fetchStudent = async () => {
+      if (!studentId) return;
+
+      try {
+        const response = await axios.get(`${API_URL}/api/users/${studentId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const { password, ...studentData } = response.data; // Exclude password
+        Object.keys(studentData).forEach((key) =>
+          setValue(key, studentData[key])
+        );
+
+        // Set teacherId explicitly if it exists
+        if (studentData.teacherId) {
+          setValue("teacherId", String(studentData.teacherId), {
+            shouldValidate: true,
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch student data:", error);
+      }
+    };
+
+    fetchStudent();
+  }, [studentId, setValue]);
+
+  useEffect(() => {
+    const fetchTeachers = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/api/users?role=Teacher`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setTeachers(response.data);
+      } catch (err) {
+        console.log("Failed to fetch teachers", err);
+      } finally {
+        setLoadingTeachers(false);
+      }
+    };
+
+    fetchTeachers();
+  }, []);
+
+  const onSubmit = async (data) => {
+    let updatedData = { ...data };
+
+    // Remove password if empty
+    if (!data.password) {
+      const { password, ...filteredData } = data;
+      updatedData = filteredData;
+    }
+
+    try {
+      const response = await axios.patch(
+        `${API_URL}/api/users/${studentId}`,
+        updatedData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        router.push("/students"); // Redirect after successful update
+      }
+    } catch (error) {
+      alert("Failed to update student. Please try again.");
+      console.log(error);
+    }
   };
 
   return (
@@ -192,15 +270,44 @@ export default function Page() {
             )}
           </div>
 
+          <div className="space-y-1">
+            <Label>Assign Teacher</Label>
+            <Select
+              value={watch("teacherId") || ""} // Ensure default value is properly set
+              {...register("teacherId", {})}
+              onValueChange={(value) =>
+                setValue("teacherId", value, { shouldValidate: true })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={
+                    loadingTeachers ? "Loading teachers..." : "Select a teacher"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {teachers.map((teacher) => (
+                  <SelectItem key={teacher.id} value={teacher.id}>
+                    {teacher.firstName} {teacher.lastName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.teacherId && (
+              <p className="text-red-500 text-sm">Teacher is required</p>
+            )}
+          </div>
+
           {/* Student ID */}
           <div className="space-y-1">
             <Label htmlFor="studentId">Student ID</Label>
             <Input
               id="studentId"
               placeholder="Enter student ID"
-              {...register("studentId", { required: true })}
+              {...register("uniqueId", { required: true })}
             />
-            {errors.studentId && (
+            {errors.uniqueId && (
               <p className="text-red-500 text-sm">Student ID is required</p>
             )}
           </div>

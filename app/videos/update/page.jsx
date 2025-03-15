@@ -18,6 +18,10 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useSearchParams } from "next/navigation";
+import axios from "axios";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Function to extract YouTube video ID
 const getYouTubeId = (url) => {
@@ -27,14 +31,6 @@ const getYouTubeId = (url) => {
   return match ? match[1] : null;
 };
 
-// Dummy Existing Video Data
-const existingVideo = {
-  name: "Mastering UI/UX Design",
-  description: "A deep dive into UI design principles and best practices.",
-  link: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-  status: "unlocked", // "locked" or "unlocked"
-};
-
 export default function Page() {
   const {
     register,
@@ -42,23 +38,78 @@ export default function Page() {
     watch,
     setValue,
     formState: { errors },
-  } = useForm({
-    defaultValues: existingVideo, // Prefill form with existing data
-  });
-
-  const [videoId, setVideoId] = useState(getYouTubeId(existingVideo.link));
+  } = useForm({});
 
   // Watch for YouTube link changes
   const youtubeLink = watch("link");
 
-  useEffect(() => {
-    const id = getYouTubeId(youtubeLink);
-    setVideoId(id);
-  }, [youtubeLink]);
+  const [videoId, setVideoId] = useState();
 
-  const onSubmit = (data) => {
-    console.log("Updated Video Data:", data);
-    alert("Video material updated successfully!");
+  const searchParams = useSearchParams();
+  const id = searchParams.get("videoId");
+
+  const [loading, setLoading] = useState(true);
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    const fetchVideo = async () => {
+      if (!id) return;
+
+      try {
+        const response = await axios.get(`${API_URL}/api/videos/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const videoData = response.data;
+        console.log(videoData);
+
+        // Map backend fields to frontend form
+        setValue("name", videoData.name);
+        setValue("description", videoData.description);
+        setValue("link", videoData.link);
+        setValue("status", videoData.isOpen ? "unlocked" : "locked"); // Map isOpen to status
+
+        // Extract & update YouTube video ID
+        setVideoId(getYouTubeId(videoData.link));
+      } catch (error) {
+        console.error("Failed to fetch video:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVideo();
+  }, [videoId, setValue]);
+
+  const onSubmit = async (data) => {
+    const updatedData = {
+      name: data.name,
+      description: data.description,
+      link: data.link,
+      isOpen: data.status === "unlocked", // Convert "unlocked" to true, "locked" to false
+    };
+
+    try {
+      const response = await axios.patch(
+        `${API_URL}/api/videos/${videoId}`,
+        updatedData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        alert("Video updated successfully!");
+        router.push("/videos"); // Redirect after update
+      }
+    } catch (error) {
+      console.error("Failed to update video:", error);
+      alert("Failed to update video. Please try again.");
+    }
   };
 
   return (
@@ -142,7 +193,7 @@ export default function Page() {
           {/* Lock/Unlock Video */}
           <div>
             <Label className="mb-4">Video Status</Label>
-            <RadioGroup defaultValue={existingVideo.status}>
+            <RadioGroup>
               <div className="flex items-center gap-2">
                 <RadioGroupItem
                   value="unlocked"

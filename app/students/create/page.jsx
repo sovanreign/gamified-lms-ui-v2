@@ -24,6 +24,13 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 export default function Page() {
   const {
     register,
@@ -31,12 +38,54 @@ export default function Page() {
     reset,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm({});
+  const [teachers, setTeachers] = useState([]);
+  const [loadingTeachers, setLoadingTeachers] = useState(true);
+  const router = useRouter();
 
-  const onSubmit = (data) => {
-    console.log(data);
-    alert("Student added successfully!");
+  useEffect(() => {
+    const fetchTeachers = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/api/users?role=Teacher`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        setTeachers(response.data);
+      } catch (err) {
+        console.log("Failed to fetch teachers", err);
+      } finally {
+        setLoadingTeachers(false);
+      }
+    };
+
+    fetchTeachers();
+  }, []);
+
+  const onSubmit = async (data) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/users`,
+        {
+          ...data,
+          age: parseInt(data.age, 10),
+          role: "Student",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (response.status === 201) {
+        router.push("/students");
+      }
+    } catch (error) {
+      alert("Failed to add student. Please try again.");
+      console.log(error);
+    }
   };
 
   return (
@@ -172,27 +221,60 @@ export default function Page() {
             )}
           </div>
 
+          {/* Teacher Selection */}
+          <div className="space-y-1">
+            <Label>Assign Teacher</Label>
+            <Select
+              {...register("teacherId", { required: "Teacher is required" })}
+              onValueChange={(value) =>
+                setValue("teacherId", value, { shouldValidate: true })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={
+                    loadingTeachers ? "Loading teachers..." : "Select a teacher"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {teachers.map((teacher) => (
+                  <SelectItem key={teacher.id} value={teacher.id}>
+                    {teacher.firstName} {teacher.lastName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.teacherId && (
+              <p className="text-red-500 text-sm">Teacher is required</p>
+            )}
+          </div>
+
           {/* Student ID */}
           <div className="space-y-1">
             <Label htmlFor="studentId">Student ID</Label>
             <Input
               id="studentId"
               placeholder="Enter student ID"
-              {...register("studentId", { required: true })}
+              {...register("uniqueId", { required: true })}
             />
-            {errors.studentId && (
+            {errors.uniqueId && (
               <p className="text-red-500 text-sm">Student ID is required</p>
             )}
           </div>
 
           {/* Submit & Cancel Buttons */}
           <div className="flex justify-end gap-2">
-            <Button variant="outline" type="button" onClick={() => reset()}>
-              Cancel
-            </Button>
-            <Button type="submit" className="bg-primary text-white">
-              Add Student
-            </Button>
+            {isSubmitting ? (
+              <Button type="submit" className="" disabled={true}>
+                <Loader2 className="animate-spin" />
+                Adding...
+              </Button>
+            ) : (
+              <Button type="submit" className="">
+                Add Student
+              </Button>
+            )}
           </div>
         </form>
       </div>
