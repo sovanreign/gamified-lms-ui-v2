@@ -49,7 +49,7 @@ export default function UpdateTeacherPage() {
     if (teacher) {
       reset({
         ...teacher,
-        password: undefined,
+        password: "",
         gender: teacher.gender || "",
       });
 

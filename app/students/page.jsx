@@ -40,77 +40,49 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import Lottie from "lottie-react";
 import notFound from "../../public/not-found.json";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { deleteStudent, fetchStudents } from "@/lib/api/students";
+import Header from "@/components/header";
+import EmptyState from "@/components/empty-state";
+import ConfirmDialog from "@/components/confirm-dialog";
+import { toast } from "sonner";
+import { useDebounce } from "use-debounce";
 
 export default function Page() {
-  const [students, setStudents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch] = useDebounce(search, 500);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
   const router = useRouter();
-  const token = localStorage.getItem("token");
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/api/users?role=Student`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        console.log(response.data);
+  const {
+    data: students = [],
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["students", debouncedSearch],
+    queryFn: fetchStudents,
+    keepPreviousData: true,
+  });
 
-        setStudents(response.data);
-      } catch (err) {
-        console.log(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStudents();
-  }, []);
-
-  const handleDeleteClick = (student) => {
-    setSelectedUser(student);
-    setOpenDeleteModal(true);
-  };
-
-  const confirmDelete = async () => {
-    if (!selectedUser) return;
-
-    try {
-      await axios.delete(`${API_URL}/api/users/${selectedUser.id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      setStudents(students.filter((s) => s.id !== selectedUser.id));
-    } catch (err) {
+  const mutation = useMutation({
+    mutationFn: deleteStudent,
+    onSuccess: (deletedId) => {
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+      setDeleteDialogOpen(false);
+      toast.success("Student deleted successfully.");
+    },
+    onError: () => {
       alert("Failed to delete student. Please try again.");
-    } finally {
-      setOpenDeleteModal(false);
-    }
-  };
+      setDeleteDialogOpen(false);
+    },
+  });
 
   return (
     <Body>
-      <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-        <div className="flex items-center gap-2 px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbPage>Students</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </div>
-      </header>
+      <Header breadcrumbs={[{ label: "Students" }]} />
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         <div className="p-6 space-y-4">
           {/* Top Search and Actions */}
@@ -119,6 +91,8 @@ export default function Page() {
               type="text"
               placeholder="Search Students..."
               className="w-64"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
             <div className="flex gap-2">
               <Button
@@ -132,22 +106,32 @@ export default function Page() {
             </div>
           </div>
 
-          {loading && (
+          {isLoading && (
             <div className="flex justify-center items-center py-10">
               <Loader2 className="h-6 w-6 animate-spin text-gray-600" />
               <span className="ml-2 text-gray-600">Loading students...</span>
             </div>
           )}
 
-          {!loading && students.length === 0 && (
-            <div className="flex flex-col items-center justify-center">
-              <Lottie animationData={notFound} className="w-64" />
-              <p className="text-center text-gray-500">No students found.</p>
+          {isError && (
+            <div className="flex justify-center py-10">
+              <p className="text-red-500">
+                Failed to load students. Try again later.
+              </p>
             </div>
           )}
 
+          {!isLoading && students.length === 0 && (
+            <EmptyState
+              animation={notFound}
+              message="No students found."
+              buttonText="Add Student"
+              onButtonClick={() => router.push("/students/create")}
+            />
+          )}
+
           {/* Table */}
-          {!loading && students.length > 0 && (
+          {!isLoading && students.length > 0 && (
             <div className="border rounded-md shadow-sm">
               <Table>
                 <TableHeader>
@@ -209,7 +193,10 @@ export default function Page() {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={() => handleDeleteClick(student)}
+                              onClick={() => {
+                                setSelectedUser(student);
+                                setDeleteDialogOpen(true);
+                              }}
                             >
                               Delete
                             </DropdownMenuItem>
@@ -225,29 +212,15 @@ export default function Page() {
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
-      <Dialog open={openDeleteModal} onOpenChange={setOpenDeleteModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Deletion</DialogTitle>
-          </DialogHeader>
-          <p>
-            Are you sure you want to delete{" "}
-            <strong>
-              {selectedUser?.firstName} {selectedUser?.lastName}
-            </strong>
-            ?
-          </p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenDeleteModal(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={confirmDelete}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={() => mutation.mutate(selectedUser.id)}
+        title="Confirm Deletion"
+        description={`Are you sure you want to delete ${selectedUser?.firstName} ${selectedUser?.lastName}?`}
+        confirmText="Delete"
+        destructive
+      />
     </Body>
   );
 }

@@ -1,18 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useRouter, useSearchParams } from "next/navigation";
+import { fetchStudentById, updateStudent } from "@/lib/api/students";
+import { fetchTeachers } from "@/lib/api/teachers";
 import Body from "@/components/body";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -23,28 +17,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useParams, useSearchParams, useRouter } from "next/navigation";
-import axios from "axios";
+import { Loader2 } from "lucide-react";
+import Header from "@/components/header";
+import { toast } from "sonner";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-const token =
-  typeof window !== "undefined" ? localStorage.getItem("token") : null;
-
-const studentData = {
-  username: "",
-  password: "",
-  firstName: "",
-  lastName: "",
-  middleName: "",
-  age: "",
-  gender: "",
-  address: "",
-  uniqueId: "",
-  teacherId: "",
-};
-
-export default function Page() {
+export default function UpdateStudentPage() {
   const {
     register,
     handleSubmit,
@@ -52,280 +29,248 @@ export default function Page() {
     watch,
     setValue,
     formState: { errors },
-  } = useForm({
-    defaultValues: studentData,
-  });
+  } = useForm();
 
+  const router = useRouter();
   const searchParams = useSearchParams();
   const studentId = searchParams.get("studentId");
 
-  const [teachers, setTeachers] = useState([]);
-  const [loadingTeachers, setLoadingTeachers] = useState(true);
+  const {
+    data: student,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["student", studentId],
+    queryFn: () => fetchStudentById(studentId),
+    enabled: !!studentId,
+    onError: () => toast.error("Failed to fetch student data."),
+  });
+
+  const { data: teachers = [], isLoading: loadingTeachers } = useQuery({
+    queryKey: ["teachers"],
+    queryFn: fetchTeachers,
+  });
 
   useEffect(() => {
-    const fetchStudent = async () => {
-      if (!studentId) return;
+    if (student) {
+      reset({
+        username: student.username || "",
+        password: "",
+        firstName: student.firstName || "",
+        lastName: student.lastName || "",
+        middleName: student.middleName || "",
+        age: student.age ? String(student.age) : "",
+        gender: student.gender || "",
+        address: student.address || "",
+        uniqueId: student.uniqueId || "",
+        teacherId: student.teacherId ? String(student.teacherId) : "",
+      });
 
-      try {
-        const response = await axios.get(`${API_URL}/api/users/${studentId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const { password, ...studentData } = response.data; // Exclude password
-        Object.keys(studentData).forEach((key) =>
-          setValue(key, studentData[key])
-        );
-
-        // Set teacherId explicitly if it exists
-        if (studentData.teacherId) {
-          setValue("teacherId", String(studentData.teacherId), {
+      setTimeout(() => {
+        if (student.gender) {
+          setValue("gender", student.gender, { shouldValidate: true });
+        }
+        if (student.teacherId) {
+          setValue("teacherId", String(student.teacherId), {
             shouldValidate: true,
           });
         }
-      } catch (error) {
-        console.error("Failed to fetch student data:", error);
-      }
+      }, 0);
+    }
+  }, [student, reset, setValue]);
+
+  const mutation = useMutation({
+    mutationFn: ({ studentId, data }) => updateStudent({ studentId, data }),
+    onSuccess: () => {
+      toast.success("Student updated successfully.");
+      router.push("/students");
+    },
+    onError: () => toast.error("Failed to update student."),
+  });
+
+  const onSubmit = (data) => {
+    const formattedData = {
+      ...data,
+      age: parseInt(data.age, 10),
+      role: "Student",
     };
 
-    fetchStudent();
-  }, [studentId, setValue]);
+    if (!data.password) delete formattedData.password;
 
-  useEffect(() => {
-    const fetchTeachers = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/api/users?role=Teacher`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setTeachers(response.data);
-      } catch (err) {
-        console.log("Failed to fetch teachers", err);
-      } finally {
-        setLoadingTeachers(false);
-      }
-    };
-
-    fetchTeachers();
-  }, []);
-
-  const onSubmit = async (data) => {
-    let updatedData = { ...data };
-
-    // Remove password if empty
-    if (!data.password) {
-      const { password, ...filteredData } = data;
-      updatedData = filteredData;
-    }
-
-    try {
-      const response = await axios.patch(
-        `${API_URL}/api/users/${studentId}`,
-        updatedData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        router.push("/students"); // Redirect after successful update
-      }
-    } catch (error) {
-      alert("Failed to update student. Please try again.");
-      console.log(error);
-    }
+    mutation.mutate({ studentId, data: formattedData });
   };
 
   return (
     <Body>
-      <header className="flex h-16 shrink-0 items-center gap-2 px-4 transition-[width,height] ease-linear">
-        <SidebarTrigger className="-ml-1" />
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem className="hidden md:block">
-              <BreadcrumbLink href="/students">Students</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem className="hidden md:block">
-              <BreadcrumbPage>Update</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      </header>
+      <Header
+        breadcrumbs={[
+          { label: "Students", href: "/students" },
+          { label: "Update" },
+        ]}
+      />
 
-      <div className="flex flex-1 flex-col items-center justify-center p-6">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 w-full">
-          {/* Username */}
-          <div className="space-y-1">
-            <Label htmlFor="username">Username</Label>
-            <Input
-              id="username"
-              placeholder="Enter username"
-              {...register("username", { required: true })}
-            />
-            {errors.username && (
-              <p className="text-red-500 text-sm">Username is required</p>
-            )}
+      <div className="flex flex-1 flex-col items-center p-6">
+        {isLoading && (
+          <div className="flex items-center justify-center">
+            <Loader2 className="animate-spin text-gray-600" />
+            <p className="ml-2 text-gray-600">Loading student details...</p>
           </div>
+        )}
 
-          {/* Password (Optional) */}
-          <div className="space-y-1">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Enter new password (optional)"
-              {...register("password")}
-            />
-          </div>
+        {isError && (
+          <p className="text-red-500 text-sm">
+            Failed to load student details.
+          </p>
+        )}
 
-          {/* First Name & Last Name */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <Label htmlFor="firstName">First Name</Label>
-              <Input
-                id="firstName"
-                placeholder="Enter first name"
-                {...register("firstName", { required: true })}
-              />
-              {errors.firstName && (
-                <p className="text-red-500 text-sm">First name is required</p>
-              )}
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="lastName">Last Name</Label>
-              <Input
-                id="lastName"
-                placeholder="Enter last name"
-                {...register("lastName", { required: true })}
-              />
-              {errors.lastName && (
-                <p className="text-red-500 text-sm">Last name is required</p>
-              )}
-            </div>
-          </div>
-
-          {/* Middle Name */}
-          <div className="space-y-1">
-            <Label htmlFor="middleName">Middle Name</Label>
-            <Input
-              id="middleName"
-              placeholder="Enter middle name"
-              {...register("middleName")}
-            />
-          </div>
-
-          {/* Age & Gender */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <Label htmlFor="age">Age</Label>
-              <Input
-                id="age"
-                type="number"
-                placeholder="Enter age"
-                {...register("age", { required: true })}
-              />
-              {errors.age && (
-                <p className="text-red-500 text-sm">Age is required</p>
-              )}
-            </div>
-            <div className="space-y-1">
-              <Label>Gender</Label>
-              <Select
-                {...register("gender", { required: "Gender is required" })}
-                value={watch("gender")}
-                onValueChange={(value) =>
-                  setValue("gender", value, { shouldValidate: true })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select gender" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Male">Male</SelectItem>
-                  <SelectItem value="Female">Female</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.gender && (
-                <p className="text-red-500 text-sm">Gender is required</p>
-              )}
-            </div>
-          </div>
-
-          {/* Address */}
-          <div className="space-y-1">
-            <Label htmlFor="address">Address</Label>
-            <Input
-              id="address"
-              placeholder="Enter address"
-              {...register("address", { required: true })}
-            />
-            {errors.address && (
-              <p className="text-red-500 text-sm">Address is required</p>
-            )}
-          </div>
-
-          <div className="space-y-1">
-            <Label>Assign Teacher</Label>
-            <Select
-              value={watch("teacherId") || ""} // Ensure default value is properly set
-              {...register("teacherId", {})}
-              onValueChange={(value) =>
-                setValue("teacherId", value, { shouldValidate: true })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    loadingTeachers ? "Loading teachers..." : "Select a teacher"
-                  }
+        {!isLoading && !isError && student && (
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 w-full">
+            {/* Username & Password */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  {...register("username", { required: true })}
                 />
-              </SelectTrigger>
-              <SelectContent>
-                {teachers.map((teacher) => (
-                  <SelectItem key={teacher.id} value={teacher.id}>
-                    {teacher.firstName} {teacher.lastName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.teacherId && (
-              <p className="text-red-500 text-sm">Teacher is required</p>
-            )}
-          </div>
+                {errors.username && (
+                  <p className="text-red-500 text-xs">Username is required</p>
+                )}
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  {...register("password")}
+                  placeholder="Enter new password (optional)"
+                />
+              </div>
+            </div>
 
-          {/* Student ID */}
-          <div className="space-y-1">
-            <Label htmlFor="studentId">Student ID</Label>
-            <Input
-              id="studentId"
-              placeholder="Enter student ID"
-              {...register("uniqueId", { required: true })}
-            />
-            {errors.uniqueId && (
-              <p className="text-red-500 text-sm">Student ID is required</p>
-            )}
-          </div>
+            {/* First Name & Last Name */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  {...register("firstName", { required: true })}
+                />
+                {errors.firstName && (
+                  <p className="text-red-500 text-xs">First name is required</p>
+                )}
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  {...register("lastName", { required: true })}
+                />
+                {errors.lastName && (
+                  <p className="text-red-500 text-xs">Last name is required</p>
+                )}
+              </div>
+            </div>
 
-          {/* Submit & Cancel Buttons */}
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => reset(studentData)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" className="bg-primary text-white">
-              Update Student
-            </Button>
-          </div>
-        </form>
+            {/* Middle Name & Student ID */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="middleName">Middle Name</Label>
+                <Input id="middleName" {...register("middleName")} />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="studentId">Student ID</Label>
+                <Input
+                  id="studentId"
+                  {...register("uniqueId", { required: true })}
+                />
+                {errors.uniqueId && (
+                  <p className="text-red-500 text-xs">Student ID is required</p>
+                )}
+              </div>
+            </div>
+
+            {/* Age & Gender */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="age">Age</Label>
+                <Input
+                  id="age"
+                  type="number"
+                  {...register("age", { required: true })}
+                />
+                {errors.age && (
+                  <p className="text-red-500 text-xs">Age is required</p>
+                )}
+              </div>
+              <div className="space-y-1">
+                <Label>Gender</Label>
+                <Select
+                  onValueChange={(value) =>
+                    setValue("gender", value, { shouldValidate: true })
+                  }
+                  value={watch("gender")}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Male">Male</SelectItem>
+                    <SelectItem value="Female">Female</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Address & Teacher Selection */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="address">Address</Label>
+                <Input
+                  id="address"
+                  {...register("address", { required: true })}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Assign Teacher</Label>
+                <Select
+                  onValueChange={(value) =>
+                    setValue("teacherId", value, { shouldValidate: true })
+                  }
+                  value={watch("teacherId")}
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        loadingTeachers
+                          ? "Loading teachers..."
+                          : "Select a teacher"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {teachers.map((teacher) => (
+                      <SelectItem key={teacher.id} value={String(teacher.id)}>
+                        {teacher.firstName} {teacher.lastName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button type="submit" disabled={mutation.isPending}>
+                {mutation.isPending ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  "Update Student"
+                )}
+              </Button>
+            </div>
+          </form>
+        )}
       </div>
     </Body>
   );
