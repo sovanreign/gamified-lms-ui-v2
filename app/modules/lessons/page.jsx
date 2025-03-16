@@ -155,7 +155,9 @@ export default function Page() {
                     <div>
                       <p className="font-medium">{lesson.name}</p>
                       <p className="text-sm text-gray-600">
-                        {lesson.description}
+                        {lesson.description.length > 50
+                          ? `${lesson.description.substring(0, 50)}...`
+                          : lesson.description}
                       </p>
                     </div>
                   </TableCell>

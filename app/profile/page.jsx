@@ -15,6 +15,7 @@ import EmptyState from "@/components/empty-state";
 import notFound from "@/public/not-found.json";
 import { toast } from "sonner";
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 export default function Page() {
   const searchParams = useSearchParams();
   const userId = searchParams.get("userId") || localStorage.getItem("userId");
@@ -22,6 +23,7 @@ export default function Page() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef(null);
   const [selectedImage, setSelectedImage] = useState(null);
+  const role = localStorage.getItem("role");
 
   const {
     data: user,
@@ -126,48 +128,53 @@ export default function Page() {
                       {user.firstName} {user.lastName}{" "}
                     </h2>
                     <p className="text-gray-600 text-sm">{user.username}</p>
-                    <div className=" mt-2 flex items-center gap-1 text-yellow-500 font-semibold">
-                      <Star size={18} />
-                      <span className="text-lg">{user.expPoints}</span> Total
-                      Points
-                    </div>
+                    {role === "Student" && (
+                      <div className=" mt-2 flex items-center gap-1 text-yellow-500 font-semibold">
+                        <Star size={18} />
+                        <span className="text-lg">{user.expPoints}</span> Total
+                        Points
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 {/* Right Section: Rank & Leaderboard */}
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-violet-900">5</p>
-                  <p className="text-gray-600 text-sm">#RANK</p>
-                  <Button className="mt-2 bg-primary text-white">
-                    View Leaderboard
-                  </Button>
-                </div>
+                {/* {role === "Student" && (
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-violet-900">5</p>
+                    <p className="text-gray-600 text-sm">#RANK</p>
+                    <Button className="mt-2 bg-primary text-white">
+                      View Leaderboard
+                    </Button>
+                  </div>
+                )} */}
               </div>
             </Card>
 
-            {/* Badges */}
-            <Card className="p-4">
-              <h3 className="text-lg font-semibold mb-3">Achievements</h3>
-              <div className="flex gap-4">
-                {/* {user.badges.map((badge, index) => (
-                  <div key={index} className="flex flex-col items-center">
-                    <img
-                      src={badge.icon}
-                      alt={badge.name}
-                      className="w-16 h-16"
-                    />
-                    <p className="text-sm text-gray-600 mt-1">{badge.name}</p>
-                  </div>
-                ))} */}
-              </div>
-            </Card>
+            {
+              role === "Student" && ""
+              // <Card className="p-4">
+              //   <h3 className="text-lg font-semibold mb-3">Achievements</h3>
+              //   <div className="flex gap-4">
+              //     {/* {user.badges.map((badge, index) => (
+              //     <div key={index} className="flex flex-col items-center">
+              //       <img
+              //         src={badge.icon}
+              //         alt={badge.name}
+              //         className="w-16 h-16"
+              //       />
+              //       <p className="text-sm text-gray-600 mt-1">{badge.name}</p>
+              //     </div>
+              //   ))} */}
+              //   </div>
+              // </Card>
+            }
 
             {/* Personal Information */}
             <Card className="p-4 relative">
               <h3 className="text-lg font-semibold mb-3">
                 Personal Information
               </h3>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* First Name */}
                 <p className="text-gray-700">
@@ -225,7 +232,6 @@ export default function Page() {
                   {user.teacher?.firstName || "---"}
                 </p>
               </div>
-
               {/* Edit Button */}
               {/* <Button
                 className="absolute top-3 right-3 bg-gray-200 text-gray-600 hover:bg-gray-300"

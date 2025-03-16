@@ -109,6 +109,7 @@ const sidebarItemsByRole = {
   ],
   Teacher: [
     { name: "Home", url: "/home", icon: FaHome },
+    { name: "Students", url: "/students", icon: FaChild },
     { name: "Lessons", url: "/modules", icon: FaBook },
     { name: "Videos", url: "/videos", icon: FaVideo },
     { name: "Activities", url: "/activities", icon: FaGamepad },
@@ -135,13 +136,11 @@ export function AppSidebar({ ...props }) {
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg  text-sidebar-primary-foreground">
                   <Image src="/logo.png" width={32} height={32} alt="logo" />
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
+                <div className="grid flex-1 text-left text-xs leading-tight">
                   <span className="truncate font-semibold">
                     Malasiqui Adventist School
                   </span>
-                  <span className="truncate text-xs">
-                    Learning Management System
-                  </span>
+                  <span className="truncate text-xs">E-Learning System</span>
                 </div>
               </a>
             </SidebarMenuButton>

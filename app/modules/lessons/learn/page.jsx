@@ -31,6 +31,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { fetchLessonById, markLessonAsDone } from "@/lib/api/lessons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import ReactConfetti from "react-confetti";
+import Lesson1 from "./components/lesson1";
+import Lesson2 from "./components/lesson2";
+import Lesson3 from "./components/lesson3";
 
 const xpData = {
   lessonXP: 20,
@@ -89,8 +92,11 @@ export default function Page() {
   const loadContent = () => {
     switch (lesson.content) {
       case "lesson1":
-        return <Template />;
-
+        return <Lesson1 />;
+      case "lesson2":
+        return <Lesson2 />;
+      case "lesson3":
+        return <Lesson3 />;
       default:
         return <Template />;
     }
