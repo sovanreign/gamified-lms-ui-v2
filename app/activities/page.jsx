@@ -17,95 +17,135 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { Settings2, ListChecks } from "lucide-react";
-
-// Dummy Data for Activities
-const activities = [
-  {
-    id: 1,
-    title: "UI/UX Principles Quiz",
-    description: "Test your knowledge of fundamental UI/UX design principles.",
-    questions: 10,
-    lastEdited: "3h ago",
-    image: "/module.png",
-  },
-  {
-    id: 2,
-    title: "Color Theory Challenge",
-    description: "Understand how colors affect design and user experience.",
-    questions: 15,
-    lastEdited: "5h ago",
-    image: "/module.png",
-  },
-];
+import { Settings2, ListChecks, Loader2, Lock } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { fetchActivities, updateActivity } from "@/lib/api/activities";
+import Header from "@/components/header";
+import EmptyState from "@/components/empty-state";
+import notFound from "@/public/not-found.json";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function Page() {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  const {
+    data: activities = [],
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["activities"],
+    queryFn: fetchActivities,
+  });
+
+  const mutation = useMutation({
+    mutationFn: ({ activityId, data }) => updateActivity({ activityId, data }),
+    onSuccess: () => {
+      toast.success("Activity updated successfully!");
+      queryClient.invalidateQueries({ queryKey: ["activities"] }); // Refresh list
+    },
+    onError: () => toast.error("Failed to update activity."),
+  });
+
   return (
     <Body>
-      <header className="flex h-16 shrink-0 items-center gap-2 px-4 transition-[width,height] ease-linear">
-        <SidebarTrigger className="-ml-1" />
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem className="hidden md:block">
-              <BreadcrumbPage>Activities</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      </header>
+      <Header breadcrumbs={[{ label: "Activities" }]} />
 
       {/* Activities Grid */}
       <div className="flex flex-1 flex-col gap-4 p-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {activities.map((activity) => (
-            <Card
-              key={activity.id}
-              className="shadow-sm border rounded-lg p-0 m-0"
-            >
-              <CardHeader className="relative p-0">
-                <img
-                  src={activity.image}
-                  alt={activity.title}
-                  className="w-full h-32 object-cover rounded-t-lg"
-                />
-                <Badge className="absolute top-2 left-2 bg-gray-800 text-white">
-                  {activity.questions} Items
-                </Badge>
-              </CardHeader>
-              <CardContent className="p-4 space-y-3">
-                <h3 className="text-lg font-semibold">{activity.title}</h3>
-                <p className="text-sm text-gray-600">{activity.description}</p>
-                <p className="text-xs text-gray-500">
-                  Edited {activity.lastEdited}
-                </p>
+        {isLoading && (
+          <div className="flex justify-center items-center py-10">
+            <Loader2 className="h-6 w-6 animate-spin text-gray-600" />
+            <span className="ml-2 text-gray-600">Loading activities...</span>
+          </div>
+        )}
 
-                {/* Actions */}
-                <div className="flex justify-between mt-4">
-                  <Button className="bg-primary flex items-center gap-2">
-                    <ListChecks size={16} /> View
-                  </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <Settings2 className="h-5 w-5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => alert("Edit Activity")}>
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-red-500"
-                        onClick={() => alert("Delete Activity")}
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {isError && (
+          <div className="flex justify-center py-10">
+            <p className="text-red-500">Failed to load activities.</p>
+          </div>
+        )}
+
+        {!isLoading && activities.length === 0 && (
+          <EmptyState animation={notFound} message="No activities yet." />
+        )}
+
+        {!isLoading && activities.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {activities.map((activity) => (
+              <Card
+                key={activity.id}
+                className={`shadow-sm border rounded-lg p-0 m-0 relative ${
+                  !activity.isOpen ? "opacity-50" : ""
+                }`}
+              >
+                <CardHeader className="relative p-0">
+                  <img
+                    src={activity.image || "/module.png"}
+                    alt={activity.name}
+                    className="w-full h-32 object-cover rounded-t-lg"
+                  />
+
+                  {!activity.isOpen && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-t-lg">
+                      <Lock className="text-white h-10 w-10" />
+                    </div>
+                  )}
+
+                  <Badge className="absolute top-2 left-2 bg-gray-800 text-white">
+                    {activity.points} Items
+                  </Badge>
+                </CardHeader>
+                <CardContent className="p-4 space-y-3">
+                  <h3 className="text-lg font-semibold">{activity.name}</h3>
+                  <p className="text-sm text-gray-600">
+                    {activity.description}
+                  </p>
+                  {/* <p className="text-xs text-gray-500">
+                    Edited {activity.lastEdited}
+                  </p> */}
+
+                  {/* Actions */}
+                  <div className="flex justify-between mt-4">
+                    <Button
+                      disabled={!activity.isOpen}
+                      className="bg-primary flex items-center gap-2"
+                      onClick={() =>
+                        router.push(
+                          `/activities/overview?activityId=${activity.id}`
+                        )
+                      }
+                    >
+                      <ListChecks size={16} /> View
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <Settings2 className="h-5 w-5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() =>
+                            mutation.mutate({
+                              activityId: activity.id,
+                              data: { isOpen: !activity.isOpen }, // Toggle lock/unlock
+                            })
+                          }
+                        >
+                          {activity.isOpen
+                            ? "Lock Activity"
+                            : "Unlock Activity"}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </Body>
   );

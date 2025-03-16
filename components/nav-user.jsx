@@ -76,7 +76,11 @@ export function NavUser({ user }) {
 
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  router.push(`/profile?userId=${localStorage.getItem("id")}`)
+                }
+              >
                 <BadgeCheck />
                 View Profile
               </DropdownMenuItem>
