@@ -84,7 +84,7 @@ export default function NameTheColor() {
       sendScoreMutation.mutate({
         studentId: studentId,
         activityId: activityId,
-        score,
+        score: (score += 1),
       });
     }
   };
