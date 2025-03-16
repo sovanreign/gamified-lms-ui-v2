@@ -13,7 +13,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Pencil, Image, Clock } from "lucide-react";
+import { Pencil, Image, Clock, Loader2 } from "lucide-react";
 import { useState } from "react";
 import {
   Dialog,
@@ -25,25 +25,11 @@ import {
 import { FaLightbulb, FaRegLightbulb } from "react-icons/fa";
 import Lottie from "lottie-react";
 import partyPopper from "@/public/party-popper.json";
-
-// Dummy Lesson Data
-const lesson = {
-  title: "UI Design Fundamentals & Best Practice",
-  thumbnail: "/module.png",
-  categories: ["Fundamental", "Design", "Not Urgent"],
-  duration: "1 hour",
-  description: `Unlock the secrets to crafting compelling and user-centric digital experiences 
-  with our "UI Design Fundamentals & Best Practices" course. Whether you're a beginner eager 
-  to dive into UI design or a seasoned professional, this course provides a comprehensive 
-  journey through the core principles and industry best practices.`,
-  instructions: [
-    "There are 10 questions in this quiz.",
-    "Each question will present a brief description of UI Design Fundamentals & Best Practice.",
-    "Choose the answer that you believe best matches the description.",
-    "You have 1 minute to answer each question.",
-    "I hope this helps! If you have any more questions or need further assistance, feel free to ask.",
-  ],
-};
+import Header from "@/components/header";
+import Template from "./components/template";
+import { useRouter, useSearchParams } from "next/navigation";
+import { fetchLessonById } from "@/lib/api/lessons";
+import { useQuery } from "@tanstack/react-query";
 
 const xpData = {
   lessonXP: 20,
@@ -52,71 +38,65 @@ const xpData = {
 };
 
 export default function Page() {
+  const searchParams = useSearchParams();
+  const lessonId = searchParams.get("lessonId");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const router = useRouter();
+
+  const {
+    data: lesson,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["lesson", lessonId],
+    queryFn: () => fetchLessonById(lessonId),
+    enabled: !!lessonId,
+  });
+
+  const loadContent = () => {
+    switch (lesson.content) {
+      case "lesson1":
+        return <Template />;
+
+      default:
+        return <Template />;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Body>
+        <div className="flex justify-center items-center h-screen">
+          <Loader2 className="h-10 w-10 animate-spin text-gray-600" />
+          <span className="ml-2 text-gray-600">Loading lesson...</span>
+        </div>
+      </Body>
+    );
+  }
+
+  if (isError || !lesson) {
+    return (
+      <Body>
+        <div className="text-center text-red-500 mt-10">
+          Failed to load lesson.
+        </div>
+      </Body>
+    );
+  }
 
   return (
     <Body>
-      <header className="flex h-16 shrink-0 items-center gap-2 px-4 transition-[width,height] ease-linear">
-        <SidebarTrigger className="-ml-1" />
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem className="hidden md:block">
-              <BreadcrumbLink href="/modules">Modules</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem className="hidden md:block">
-              <BreadcrumbLink href="/lessons">Lessons</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem className="hidden md:block">
-              <BreadcrumbPage>Learn</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      </header>
+      <Header
+        breadcrumbs={[
+          { label: "Modules", href: "/modules" },
+          { label: "Lessons", href: "/modules/lessons?moduleId=" },
+          { label: "Learn" },
+        ]}
+      />
 
       {/* Lesson Content */}
       <div className="flex flex-1 flex-col gap-6 p-6">
-        {/* Lesson Thumbnail */}
-        <img
-          src={lesson.thumbnail}
-          alt="Lesson Thumbnail"
-          className="w-full h-52 object-cover rounded-lg"
-        />
-
-        {/* Lesson Title */}
-        <h1 className="text-2xl font-bold">{lesson.title}</h1>
-
-        {/* Categories */}
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-gray-600">Category</span>
-          {lesson.categories.map((category, index) => (
-            <Badge key={index} variant="secondary">
-              {category}
-            </Badge>
-          ))}
-        </div>
-
-        {/* Estimated Duration */}
-        <div className="flex items-center gap-2 text-gray-600">
-          <Clock size={16} />
-          <span>Estimate duration</span>
-          <span className="font-medium">{lesson.duration}</span>
-        </div>
-
-        {/* Lesson Description */}
-        <p className="text-gray-700 leading-relaxed">{lesson.description}</p>
-
-        {/* Instructions */}
-        <div>
-          <h2 className="text-lg font-semibold">Instructions:</h2>
-          <ul className="list-disc list-inside space-y-1 text-gray-700">
-            {lesson.instructions.map((instruction, index) => (
-              <li key={index}>{instruction}</li>
-            ))}
-          </ul>
-        </div>
-
+        {loadContent()}
         {/* Mark as Done Button */}
         <div className="flex justify-end mt-4">
           <Button
@@ -149,7 +129,7 @@ export default function Page() {
               <span className="text-lg">Lesson XP</span>
               <div className="flex items-center gap-2 ">
                 <FaRegLightbulb size={18} />
-                <span className="text-lg font-bold">{xpData.lessonXP}</span>
+                <span className="text-lg font-bold">{lesson.points}</span>
               </div>
             </div>
           </div>
@@ -158,7 +138,9 @@ export default function Page() {
           <DialogFooter className="mt-4">
             <Button
               className="w-full bg-primary text-white py-2 text-lg font-semibold"
-              onClick={() => setIsModalOpen(false)}
+              onClick={() => {
+                router.push(`/modules/lessons?moduleId=${lesson.moduleId}`);
+              }}
             >
               Continue
             </Button>
