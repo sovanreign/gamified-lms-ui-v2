@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Body from "@/components/body";
 import {
   Breadcrumb,
@@ -40,11 +40,14 @@ import EmptyState from "@/components/empty-state";
 export default function Page() {
   const [search, setSearch] = useState("");
   const router = useRouter();
-  const studentId =
-    typeof window !== "undefined" ? localStorage.getItem("id") : null;
+  let studentId;
 
   const searchParams = useSearchParams();
   const activityId = searchParams.get("activityId");
+
+  useEffect(() => {
+    studentId = localStorage.getItem("id");
+  }, []);
 
   const {
     data: activity,
