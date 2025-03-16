@@ -49,6 +49,7 @@ export default function Page() {
   const queryClient = useQueryClient();
 
   const router = useRouter();
+  const role = localStorage.getItem("role");
 
   const {
     data: videos = [],
@@ -103,14 +104,16 @@ export default function Page() {
             onChange={(e) => setSearch(e.target.value)}
           />
           <div className="flex gap-2">
-            <Button
-              className="bg-primary text-white"
-              onClick={() => {
-                router.push("/videos/create");
-              }}
-            >
-              Add Video Material
-            </Button>
+            {role !== "Student" && (
+              <Button
+                className="bg-primary text-white"
+                onClick={() => {
+                  router.push("/videos/create");
+                }}
+              >
+                Add Video Material
+              </Button>
+            )}
           </div>
         </div>
 
@@ -185,28 +188,32 @@ export default function Page() {
                       </Button>
 
                       {/* Edit & Delete Actions (Always Enabled) */}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <Settings2 className="h-5 w-5" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() =>
-                              router.push(`/videos/update?videoId=${video.id}`)
-                            }
-                          >
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-red-500"
-                            onClick={() => handleDeleteClick(video)}
-                          >
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {role !== "Student" && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <Settings2 className="h-5 w-5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() =>
+                                router.push(
+                                  `/videos/update?videoId=${video.id}`
+                                )
+                              }
+                            >
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-red-500"
+                              onClick={() => handleDeleteClick(video)}
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

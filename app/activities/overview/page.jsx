@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import notFound from "@/public/not-found.json";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { fetchActivityById } from "@/lib/api/activities";
 import Header from "@/components/header";
@@ -39,6 +39,8 @@ import EmptyState from "@/components/empty-state";
 
 export default function Page() {
   const [search, setSearch] = useState("");
+  const router = useRouter();
+  const studentId = localStorage.getItem("id");
 
   const searchParams = useSearchParams();
   const activityId = searchParams.get("activityId");
@@ -58,6 +60,10 @@ export default function Page() {
     activity?.learners?.filter((learner) =>
       learner.name.toLowerCase().includes(search.toLowerCase())
     ) || [];
+
+  const isCompleted = activity?.StudentActivity?.some(
+    (studentActivity) => studentActivity.studentId === studentId
+  );
 
   return (
     <Body>
@@ -86,7 +92,8 @@ export default function Page() {
             <div className="flex items-start justify-between">
               <div>
                 <h1 className="text-2xl font-bold">{activity.name}</h1>
-                <div className="flex items-center gap-2 mt-2">
+                <Badge variant="secondary">{activity.points} points</Badge>
+                <div className="flex items-center gap-2 mt-4">
                   {activity.description}
                 </div>
               </div>
@@ -98,11 +105,29 @@ export default function Page() {
                   alt="Activity Thumbnail"
                   className="w-48 h-32 object-cover rounded-lg"
                 />
+
                 <Button
-                  className="absolute inset-0 flex items-center justify-center bg-black/50 text-white hover:bg-black/70 transition"
+                  className={`absolute inset-0 flex items-center justify-center ${
+                    isCompleted
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-black/50 hover:bg-black/70"
+                  } text-white transition`}
                   size="lg"
+                  onClick={() =>
+                    !isCompleted &&
+                    router.push(
+                      `/activities/overview/play?activityId=${activity.id}`
+                    )
+                  }
+                  disabled={isCompleted} // Disable button if completed
                 >
-                  <PlayCircle size={32} className="mr-2" /> Play
+                  {isCompleted ? (
+                    "Completed"
+                  ) : (
+                    <>
+                      <PlayCircle size={32} className="mr-2" /> Start
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
@@ -151,53 +176,44 @@ export default function Page() {
             </div> */}
 
             {/* Learners Table */}
-            {/* <Table>
+            <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Learner</TableHead>
+                  <TableHead>Students</TableHead>
                   <TableHead>Points</TableHead>
-                  <TableHead>No. 1</TableHead>
-                  <TableHead>No. 2</TableHead>
-                  <TableHead>No. 3</TableHead>
-                  <TableHead>No. 4</TableHead>
-                  <TableHead>No. 5</TableHead>
-                  <TableHead>No. 6</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
-                {filteredLearners.map((learner) => (
-                  <TableRow key={learner.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 text-gray-600 font-bold">
-                          {learner.name.charAt(0)}
+              {activity.StudentActivity.length === 0 ? (
+                "No Students Taken The Activity Yet"
+              ) : (
+                <TableBody>
+                  {activity.StudentActivity?.map((learner) => (
+                    <TableRow key={learner.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 text-gray-600 font-bold">
+                            {learner.student.firstName.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="font-medium">
+                              {learner.student.firstName}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {learner.student.role}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium">{learner.name}</p>
-                          <p className="text-xs text-gray-500">
-                            {learner.role}
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-semibold text-gray-700">
-                        {learner.points} points
-                      </span>
-                    </TableCell>
-                    {learner.answers.map((isCorrect, index) => (
-                      <TableCell key={index} className="text-center">
-                        {isCorrect ? (
-                          <CheckCircle size={18} className="text-green-500" />
-                        ) : (
-                          <XCircle size={18} className="text-red-500" />
-                        )}
                       </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table> */}
+                      <TableCell>
+                        <span className="font-semibold text-gray-700">
+                          {learner.score} points
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              )}
+            </Table>
           </>
         )}
       </div>

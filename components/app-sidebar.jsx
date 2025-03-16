@@ -98,7 +98,33 @@ const data = {
   ],
 };
 
+const sidebarItemsByRole = {
+  Admin: [
+    { name: "Home", url: "/home", icon: FaHome },
+    { name: "Teachers", url: "/teachers", icon: FaChalkboardTeacher },
+    { name: "Students", url: "/students", icon: FaChild },
+    { name: "Lessons", url: "/modules", icon: FaBook },
+    { name: "Videos", url: "/videos", icon: FaVideo },
+    { name: "Activities", url: "/activities", icon: FaGamepad },
+  ],
+  Teacher: [
+    { name: "Home", url: "/home", icon: FaHome },
+    { name: "Lessons", url: "/modules", icon: FaBook },
+    { name: "Videos", url: "/videos", icon: FaVideo },
+    { name: "Activities", url: "/activities", icon: FaGamepad },
+  ],
+  Student: [
+    { name: "Home", url: "/home", icon: FaHome },
+    { name: "Lessons", url: "/modules", icon: FaBook },
+    { name: "Videos", url: "/videos", icon: FaVideo },
+    { name: "Activities", url: "/activities", icon: FaGamepad },
+  ],
+};
+
 export function AppSidebar({ ...props }) {
+  const role = localStorage.getItem("role") || "Student"; // Default to "Student"
+  const sidebarItems = sidebarItemsByRole[role] || [];
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -124,7 +150,7 @@ export function AppSidebar({ ...props }) {
       </SidebarHeader>
       <SidebarContent>
         {/* <NavMain items={data.navMain} /> */}
-        <NavProjects projects={data.projects} />
+        <NavProjects projects={sidebarItems} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />

@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 export default function Page() {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const role = localStorage.getItem("role");
 
   const {
     data: lessons = [],
@@ -123,29 +124,31 @@ export default function Page() {
                         router.push(`/modules/lessons?moduleId=${lesson.id}`)
                       }
                     >
-                      View
+                      Explore
                     </Button>
 
                     {/* Lock/Unlock Dropdown */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <Settings2 className="h-5 w-5" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() =>
-                            mutation.mutate({
-                              moduleId: lesson.id,
-                              data: { isOpen: !lesson.isOpen },
-                            })
-                          }
-                        >
-                          {lesson.isOpen ? "Lock Module" : "Unlock Module"}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {role !== "Student" && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <Settings2 className="h-5 w-5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() =>
+                              mutation.mutate({
+                                moduleId: lesson.id,
+                                data: { isOpen: !lesson.isOpen },
+                              })
+                            }
+                          >
+                            {lesson.isOpen ? "Lock Module" : "Unlock Module"}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
                 </CardContent>
               </Card>

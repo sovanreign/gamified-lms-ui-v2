@@ -45,7 +45,8 @@ import { toast } from "sonner";
 import { Unlock } from "next/font/google";
 
 export default function Page() {
-  const userId = localStorage.getItem("userId");
+  const userId = localStorage.getItem("id");
+  const role = localStorage.getItem("role");
   const searchParams = useSearchParams();
   const moduleId = searchParams.get("moduleId");
   const queryClient = useQueryClient();
@@ -169,9 +170,12 @@ export default function Page() {
                     {lesson.StudentLesson.some(
                       (sl) => sl.studentId === userId
                     ) ? (
-                      <Button variant="secondary">Completed</Button>
+                      <Button disabled={true} variant="secondary">
+                        Completed
+                      </Button>
                     ) : (
                       <Button
+                        disabled={!lesson.isOpen}
                         onClick={() =>
                           router.push(
                             `/modules/lessons/learn?lessonId=${lesson.id}`
@@ -184,27 +188,29 @@ export default function Page() {
                     )}
                   </TableCell>
 
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <Settings2 className="h-5 w-5" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() =>
-                            mutation.mutate({
-                              lessonId: lesson.id,
-                              data: { isOpen: !lesson.isOpen },
-                            })
-                          }
-                        >
-                          {lesson.isOpen ? "Lock Lesson" : "Unlock Lesson"}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+                  {role !== "Student" && (
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <Settings2 className="h-5 w-5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() =>
+                              mutation.mutate({
+                                lessonId: lesson.id,
+                                data: { isOpen: !lesson.isOpen },
+                              })
+                            }
+                          >
+                            {lesson.isOpen ? "Lock Lesson" : "Unlock Lesson"}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
