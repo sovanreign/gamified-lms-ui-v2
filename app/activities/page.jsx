@@ -37,13 +37,9 @@ import { FaStar } from "react-icons/fa";
 export default function Page() {
   const queryClient = useQueryClient();
   const router = useRouter();
-  let role;
-  let studentId;
+  const role = localStorage.getItem("role");
+  const studentId = localStorage.getItem("id");
 
-  useEffect(() => {
-    role = localStorage.getItem("role");
-    studentId = localStorage.getItem("id");
-  }, []);
   const {
     data: activities = [],
     isLoading,

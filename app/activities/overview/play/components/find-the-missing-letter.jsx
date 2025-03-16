@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { sendFinalScore } from "@/lib/api/activities";
@@ -41,10 +41,7 @@ export default function FindMissingLetter() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get("activityId");
   const router = useRouter();
-  let studentId;
-  useEffect(() => {
-    studentId = localStorage.getItem("id");
-  }, []);
+  const studentId = localStorage.getItem("id");
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedLetter, setSelectedLetter] = useState(null);
