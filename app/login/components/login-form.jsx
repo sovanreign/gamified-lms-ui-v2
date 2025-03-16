@@ -22,8 +22,6 @@ export function LoginForm({ className, ...props }) {
     formState: { errors },
   } = useForm();
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
   const router = useRouter();
 
   const mutation = useMutation({
@@ -45,29 +43,6 @@ export function LoginForm({ className, ...props }) {
       });
     },
   });
-
-  const onSubmit = async (data) => {
-    try {
-      const response = await axios.post(`${API_URL}/api/auth/login`, data);
-
-      const decoded = jwtDecode(response.data.access_token);
-      localStorage.setItem("token", response.data.access_token);
-      localStorage.setItem("id", decoded.id);
-      localStorage.setItem("username", decoded.username);
-      localStorage.setItem("role", decoded.role);
-
-      router.push("/home");
-    } catch (error) {
-      console.log(error);
-
-      reset(); // Reset form fields
-
-      setError("username", {
-        type: "manual",
-        message: "Incorrect username or password",
-      });
-    }
-  };
 
   return (
     <Card>

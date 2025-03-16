@@ -4,26 +4,37 @@ import { fetchActivityById } from "@/lib/api/activities";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import CountTheFruit from "./components/count-the-fruit";
-import FindMissingLetter from "./components/find-the-missing-letter";
-import NameTheColor from "./components/name-the-color";
+import { Suspense } from "react";
+import dynamic from "next/dynamic";
 
-export default function Page() {
-  const searchParam = useSearchParams();
-  const activityId = searchParam.get("activityId");
+// Dynamically import game components with SSR disabled
+const CountTheFruit = dynamic(() => import("./components/count-the-fruit"), {
+  ssr: false,
+});
+const FindMissingLetter = dynamic(
+  () => import("./components/find-the-missing-letter"),
+  { ssr: false }
+);
+const NameTheColor = dynamic(() => import("./components/name-the-color"), {
+  ssr: false,
+});
+
+function ActivityPageContent() {
+  const searchParams = useSearchParams(); // ✅ Inside a Client Component
+  const activityId = searchParams.get("activityId");
 
   const {
     data: activity,
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["activity", activityId], // Ensure uniqueness
+    queryKey: ["activity", activityId],
     queryFn: () => fetchActivityById(activityId),
-    enabled: !!activityId, // Prevents running query if no activityId
+    enabled: !!activityId,
   });
 
   const loadContent = () => {
-    switch (activity.content) {
+    switch (activity?.content) {
       case "count-the-fruit":
         return <CountTheFruit />;
       case "find-the-missing-letter":
@@ -31,7 +42,7 @@ export default function Page() {
       case "name-the-color":
         return <NameTheColor />;
       default:
-        return "No Game Displayed";
+        return <p>No Game Displayed</p>;
     }
   };
 
@@ -53,4 +64,12 @@ export default function Page() {
   }
 
   return <div className="p-6">{loadContent()}</div>;
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<p className="text-center">Loading...</p>}>
+      <ActivityPageContent />
+    </Suspense>
+  );
 }

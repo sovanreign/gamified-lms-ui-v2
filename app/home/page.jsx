@@ -1,4 +1,6 @@
-import Body from "@/components/body";
+"use client";
+
+const Body = dynamic(() => import("@/components/body"), { ssr: false });
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,6 +10,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 
 const images = [
@@ -37,6 +40,7 @@ export default function Page() {
         <div className="grid grid-cols-1 sm:grid-cols-2  gap-4 p-4">
           {images.map((image, index) => (
             <Image
+              key={image.title}
               src={image.src}
               alt={image.title}
               width={300}

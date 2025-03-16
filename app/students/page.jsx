@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Body from "@/components/body";
+const Body = dynamic(() => import("@/components/body"), { ssr: false });
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -38,7 +38,6 @@ import {
 import { Loader2, MoreHorizontal } from "lucide-react"; // Three-dot icon
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import Lottie from "lottie-react";
 import notFound from "../../public/not-found.json";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteStudent, fetchStudents } from "@/lib/api/students";
@@ -47,6 +46,7 @@ import EmptyState from "@/components/empty-state";
 import ConfirmDialog from "@/components/confirm-dialog";
 import { toast } from "sonner";
 import { useDebounce } from "use-debounce";
+import dynamic from "next/dynamic";
 
 export default function Page() {
   const [search, setSearch] = useState("");

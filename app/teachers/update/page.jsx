@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { fetchTeacherById, updateTeacher } from "@/lib/api/teachers";
-import Body from "@/components/body";
+const Body = dynamic(() => import("@/components/body"), { ssr: false });
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -19,8 +19,9 @@ import {
 import { Loader2 } from "lucide-react";
 import Header from "@/components/header";
 import { toast } from "sonner";
+import dynamic from "next/dynamic";
 
-export default function UpdateTeacherPage() {
+function TeacherUpdatePage() {
   const {
     register,
     handleSubmit,
@@ -277,5 +278,13 @@ export default function UpdateTeacherPage() {
         )}
       </div>
     </Body>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div className="text-center py-10">Loading...</div>}>
+      <TeacherUpdatePage />
+    </Suspense>
   );
 }

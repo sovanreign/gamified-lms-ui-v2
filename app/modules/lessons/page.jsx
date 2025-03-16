@@ -1,15 +1,6 @@
 "use client";
 
-import Body from "@/components/body";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+const Body = dynamic(() => import("@/components/body"), { ssr: false });
 import {
   Table,
   TableBody,
@@ -18,17 +9,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Clock,
-  FileText,
-  Loader2,
-  Lock,
-  Settings2,
-  UnlockIcon,
-} from "lucide-react";
+import { Loader2, Lock, Settings2, UnlockIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/header";
@@ -42,13 +24,26 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { Unlock } from "next/font/google";
+import dynamic from "next/dynamic";
+import { Suspense, useEffect, useState } from "react";
 
-export default function Page() {
-  const userId = localStorage.getItem("id");
-  const role = localStorage.getItem("role");
+function LessonPage() {
+  const [userId, setUserId] = useState(null);
+  const [role, setRole] = useState(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setUserId(localStorage.getItem("id"));
+      setRole(localStorage.getItem("role"));
+    }
+  }, []);
   const searchParams = useSearchParams();
-  const moduleId = searchParams.get("moduleId");
+  const [moduleId, setModuleId] = useState(null);
+
+  useEffect(() => {
+    const id = searchParams.get("moduleId");
+    setModuleId(id);
+  }, [searchParams]);
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -220,5 +215,13 @@ export default function Page() {
         )}
       </div>
     </Body>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div className="text-center py-10">Loading...</div>}>
+      <LessonPage />
+    </Suspense>
   );
 }

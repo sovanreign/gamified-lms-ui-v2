@@ -1,14 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import Body from "@/components/body";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-} from "@/components/ui/breadcrumb";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+const Body = dynamic(() => import("@/components/body"), { ssr: false });
+
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,12 +21,10 @@ import {
 } from "@/components/ui/dialog";
 import { Lock } from "lucide-react";
 
-import { Settings2, Trash2, PlayCircle, Loader2 } from "lucide-react";
+import { Settings2, PlayCircle, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import axios from "axios";
-import Lottie from "lottie-react";
+const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 import notFound from "../../public/not-found.json";
 import { useDebounce } from "use-debounce";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -49,7 +42,14 @@ export default function Page() {
   const queryClient = useQueryClient();
 
   const router = useRouter();
-  const role = localStorage.getItem("role");
+  const [role, setRole] = useState("");
+
+  useEffect(() => {
+    const storedRole = localStorage.getItem("role");
+    if (storedRole) {
+      setRole(storedRole);
+    }
+  }, []);
 
   const {
     data: videos = [],

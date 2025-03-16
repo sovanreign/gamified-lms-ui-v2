@@ -1,20 +1,10 @@
 "use client";
 
 import Body from "@/components/body";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Badge } from "@/components/ui/badge";
+
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Pencil, Image, Clock, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
+import { Suspense, useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -22,32 +12,38 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { FaLightbulb, FaRegLightbulb, FaStar } from "react-icons/fa";
-import Lottie from "lottie-react";
+import { FaStar } from "react-icons/fa";
+const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 import partyPopper from "@/public/party-popper.json";
 import Header from "@/components/header";
 import Template from "./components/template";
 import { useRouter, useSearchParams } from "next/navigation";
 import { fetchLessonById, markLessonAsDone } from "@/lib/api/lessons";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import ReactConfetti from "react-confetti";
-import Lesson1 from "./components/lesson1";
-import Lesson2 from "./components/lesson2";
-import Lesson3 from "./components/lesson3";
+const ReactConfetti = dynamic(() => import("react-confetti"), { ssr: false });
+import dynamic from "next/dynamic";
 
-const xpData = {
-  lessonXP: 20,
-  comboXP: 4,
-  image: "/profile-m.png", // Change this to your actual image
-};
+const Lesson1 = dynamic(() => import("./components/lesson1"), { ssr: false });
+const Lesson2 = dynamic(() => import("./components/lesson2"), { ssr: false });
+const Lesson3 = dynamic(() => import("./components/lesson3"), { ssr: false });
 
-export default function Page() {
+function LearnPage() {
   const searchParams = useSearchParams();
-  const lessonId = searchParams.get("lessonId");
+  const [lessonId, setLessonId] = useState(null);
+
+  useEffect(() => {
+    setLessonId(searchParams.get("lessonId"));
+  }, [searchParams]);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
-  const role = localStorage.getItem("role");
-  const id = localStorage.getItem("id");
+  const [role, setRole] = useState(null);
+  const [id, setId] = useState(null);
+
+  useEffect(() => {
+    setRole(localStorage.getItem("role"));
+    setId(localStorage.getItem("id"));
+  }, []);
 
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
 
@@ -215,5 +211,13 @@ export default function Page() {
         </DialogContent>
       </Dialog>
     </Body>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div className="text-center py-10">Loading...</div>}>
+      <LearnPage />
+    </Suspense>
   );
 }

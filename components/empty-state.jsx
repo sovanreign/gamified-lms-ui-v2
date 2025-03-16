@@ -1,6 +1,7 @@
 "use client";
 
-import Lottie from "lottie-react";
+const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
+import dynamic from "next/dynamic";
 import { Button } from "./ui/button";
 
 export default function EmptyState({

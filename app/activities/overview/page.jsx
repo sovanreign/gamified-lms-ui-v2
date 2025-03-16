@@ -1,27 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import Body from "@/components/body";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Suspense, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { fetchActivityById } from "@/lib/api/activities";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import {
-  PlayCircle,
-  Search,
-  CheckCircle,
-  XCircle,
-  Loader2,
-} from "lucide-react";
+import { PlayCircle, Loader2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -30,17 +17,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import notFound from "@/public/not-found.json";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { fetchActivityById } from "@/lib/api/activities";
 import Header from "@/components/header";
 import EmptyState from "@/components/empty-state";
 
-export default function Page() {
+const Body = dynamic(() => import("@/components/body"), { ssr: false });
+
+function ActivityOverview() {
   const [search, setSearch] = useState("");
   const router = useRouter();
-  const studentId = localStorage.getItem("id");
+  const [studentId, setStudentId] = useState(null);
+
+  useEffect(() => {
+    const id = localStorage.getItem("id");
+    setStudentId(id);
+  }, []);
 
   const searchParams = useSearchParams();
   const activityId = searchParams.get("activityId");
@@ -55,7 +45,6 @@ export default function Page() {
     enabled: !!activityId,
   });
 
-  // Filter learners based on search input
   const filteredLearners =
     activity?.learners?.filter((learner) =>
       learner.name.toLowerCase().includes(search.toLowerCase())
@@ -74,7 +63,6 @@ export default function Page() {
         ]}
       />
 
-      {/* Activity Header */}
       <div className="p-6 flex flex-col gap-6">
         {isLoading && (
           <div className="flex justify-center items-center py-10">
@@ -83,9 +71,7 @@ export default function Page() {
           </div>
         )}
 
-        {isError && (
-          <EmptyState animation={notFound} message="Failed to load activity." />
-        )}
+        {isError && <EmptyState message="Failed to load activity." />}
 
         {!isLoading && activity && (
           <>
@@ -101,7 +87,7 @@ export default function Page() {
               {/* Thumbnail Image */}
               <div className="relative">
                 <img
-                  src={"/module.png"}
+                  src="/module.png"
                   alt="Activity Thumbnail"
                   className="w-48 h-32 object-cover rounded-lg"
                 />
@@ -119,7 +105,7 @@ export default function Page() {
                       `/activities/overview/play?activityId=${activity.id}`
                     )
                   }
-                  disabled={isCompleted} // Disable button if completed
+                  disabled={isCompleted}
                 >
                   {isCompleted ? (
                     "Completed"
@@ -132,49 +118,6 @@ export default function Page() {
               </div>
             </div>
 
-            {/* Stats */}
-            {/* <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <Card className="p-4 text-center">
-                <p className="text-gray-500 text-sm">Accuracy</p>
-                <p className="text-xl font-semibold">
-                  {activity.stats.accuracy}%
-                </p>
-              </Card>
-              <Card className="p-4 text-center">
-                <p className="text-gray-500 text-sm">Completed Course</p>
-                <p className="text-xl font-semibold">
-                  {activity.stats.completionRate}%
-                </p>
-              </Card>
-              <Card className="p-4 text-center">
-                <p className="text-gray-500 text-sm">Submissions</p>
-                <p className="text-xl font-semibold">
-                  {activity.stats.submissions}
-                </p>
-              </Card>
-              <Card className="p-4 text-center">
-                <p className="text-gray-500 text-sm">Avg. Complete Time</p>
-                <p className="text-xl font-semibold">
-                  {activity.stats.avgTime}
-                </p>
-              </Card>
-            </div> */}
-
-            {/* Search Bar */}
-            {/* <div className="flex items-center gap-2">
-              <Input
-                type="text"
-                placeholder="Search Learner..."
-                className="w-64"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <Button variant="outline">
-                <Search size={16} className="mr-2" />
-                Search
-              </Button>
-            </div> */}
-
             {/* Learners Table */}
             <Table>
               <TableHeader>
@@ -183,11 +126,15 @@ export default function Page() {
                   <TableHead>Points</TableHead>
                 </TableRow>
               </TableHeader>
-              {activity.StudentActivity.length === 0 ? (
-                "No Students Taken The Activity Yet"
-              ) : (
-                <TableBody>
-                  {activity.StudentActivity?.map((learner) => (
+              <TableBody>
+                {activity.StudentActivity?.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={2} className="text-center">
+                      No Students Taken The Activity Yet
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  activity.StudentActivity?.map((learner) => (
                     <TableRow key={learner.id}>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -210,13 +157,22 @@ export default function Page() {
                         </span>
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              )}
+                  ))
+                )}
+              </TableBody>
             </Table>
           </>
         )}
       </div>
     </Body>
+  );
+}
+
+// ✅ Wrap the component in Suspense to fix `useSearchParams()` hydration error
+export default function Page() {
+  return (
+    <Suspense fallback={<div className="text-center py-10">Loading...</div>}>
+      <ActivityOverview />
+    </Suspense>
   );
 }

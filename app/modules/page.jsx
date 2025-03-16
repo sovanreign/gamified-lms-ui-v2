@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchModules, updateModule } from "@/lib/api/modules";
-import Body from "@/components/body";
+const Body = dynamic(() => import("@/components/body"), { ssr: false });
 import Header from "@/components/header";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,11 +17,19 @@ import { Lock, MoreHorizontal, Settings2 } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 
 export default function Page() {
   const queryClient = useQueryClient();
   const router = useRouter();
-  const role = localStorage.getItem("role");
+  const [role, setRole] = useState(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setRole(localStorage.getItem("role"));
+    }
+  }, []);
 
   const {
     data: lessons = [],

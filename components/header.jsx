@@ -21,7 +21,10 @@ export default function Header({ breadcrumbs = [] }) {
         <BreadcrumbList>
           {breadcrumbs.map((breadcrumb, index) => (
             <>
-              <BreadcrumbItem key={index} className="hidden md:block">
+              <BreadcrumbItem
+                key={breadcrumb.label || index}
+                className="hidden md:block"
+              >
                 {breadcrumb.href ? (
                   <BreadcrumbLink
                     className="cursor-pointer"

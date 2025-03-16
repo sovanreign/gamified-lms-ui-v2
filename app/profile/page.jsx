@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
-import Body from "@/components/body";
+import { Suspense, useEffect, useRef, useState } from "react";
+const Body = dynamic(() => import("@/components/body"), { ssr: false });
 import Header from "@/components/header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,18 +12,26 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchUserById, updateProfilePicture } from "@/lib/api/users";
 import { useRouter, useSearchParams } from "next/navigation";
 import EmptyState from "@/components/empty-state";
+
 import notFound from "@/public/not-found.json";
 import { toast } from "sonner";
+import dynamic from "next/dynamic";
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export default function Page() {
+function ProfilePage() {
   const searchParams = useSearchParams();
-  const userId = searchParams.get("userId") || localStorage.getItem("userId");
+  const userId = searchParams.get("userId");
   const router = useRouter();
   const queryClient = useQueryClient();
   const fileInputRef = useRef(null);
   const [selectedImage, setSelectedImage] = useState(null);
-  const role = localStorage.getItem("role");
+  const [role, setRole] = useState(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setRole(localStorage.getItem("role"));
+    }
+  }, []);
 
   const {
     data: user,
@@ -251,5 +259,13 @@ export default function Page() {
         )}
       </div>
     </Body>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div className="text-center py-10">Loading...</div>}>
+      <ProfilePage />
+    </Suspense>
   );
 }

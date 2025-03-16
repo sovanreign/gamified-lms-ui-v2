@@ -1,13 +1,7 @@
 "use client";
 
-import Body from "@/components/body";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-} from "@/components/ui/breadcrumb";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+const Body = dynamic(() => import("@/components/body"), { ssr: false });
+
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,14 +11,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import {
-  Settings2,
-  ListChecks,
-  Loader2,
-  Lock,
-  Play,
-  Gamepad,
-} from "lucide-react";
+import { Settings2, Loader2, Lock, Gamepad } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchActivities, updateActivity } from "@/lib/api/activities";
 import Header from "@/components/header";
@@ -33,12 +20,19 @@ import notFound from "@/public/not-found.json";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { FaStar } from "react-icons/fa";
+import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 
 export default function Page() {
   const queryClient = useQueryClient();
   const router = useRouter();
-  const role = localStorage.getItem("role");
-  const studentId = localStorage.getItem("id");
+  const [role, setRole] = useState(null);
+  const [studentId, setStudentId] = useState(null);
+
+  useEffect(() => {
+    setRole(localStorage.getItem("role"));
+    setStudentId(localStorage.getItem("id"));
+  }, []);
 
   const {
     data: activities = [],

@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import Body from "@/components/body";
+const Body = dynamic(() => import("@/components/body"), { ssr: false });
 import Header from "@/components/header";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { createVideo } from "@/lib/api/videos"; // ✅ API function for creating a video
+import dynamic from "next/dynamic";
 
 // Extract YouTube Video ID
 const getYouTubeId = (url) => {
@@ -22,7 +23,7 @@ const getYouTubeId = (url) => {
   return match ? match[1] : null;
 };
 
-export default function CreateVideoPage() {
+export default function Page() {
   const {
     register,
     handleSubmit,

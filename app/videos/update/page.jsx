@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -23,7 +23,7 @@ const getYouTubeId = (url) => {
   return match ? match[1] : null;
 };
 
-export default function UpdateVideoPage() {
+function VideoUpdatePage() {
   const {
     register,
     handleSubmit,
@@ -225,5 +225,13 @@ export default function UpdateVideoPage() {
         )}
       </div>
     </Body>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div className="text-center py-10">Loading...</div>}>
+      <VideoUpdatePage />
+    </Suspense>
   );
 }

@@ -3,8 +3,9 @@
 import { LoginForm } from "./components/login-form";
 import Image from "next/image";
 
-import Lottie from "lottie-react";
+const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 import childrenPlaying from "../../public/children-playing.json";
+import dynamic from "next/dynamic";
 
 export default function Page() {
   return (

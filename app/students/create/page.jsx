@@ -5,7 +5,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { fetchTeachers } from "@/lib/api/teachers";
 import { createStudent } from "@/lib/api/students";
-import Body from "@/components/body";
+const Body = dynamic(() => import("@/components/body"), { ssr: false });
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,7 @@ import {
 import { Loader2 } from "lucide-react";
 import Header from "@/components/header";
 import { toast } from "sonner";
+import dynamic from "next/dynamic";
 
 export default function CreateStudentPage() {
   const {

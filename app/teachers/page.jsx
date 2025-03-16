@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Body from "@/components/body";
+const Body = dynamic(() => import("@/components/body"), { ssr: false });
 
 import {
   Table,
@@ -23,7 +23,6 @@ import {
 
 import { MoreHorizontal, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import Lottie from "lottie-react";
 import notFound from "../../public/not-found.json";
 import ConfirmDialog from "@/components/confirm-dialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -31,6 +30,7 @@ import { deleteTeacher, fetchTeachers } from "@/lib/api/teachers";
 import Header from "@/components/header";
 import EmptyState from "@/components/empty-state";
 import { useDebounce } from "use-debounce";
+import dynamic from "next/dynamic";
 
 export default function Page() {
   const [search, setSearch] = useState("");
