@@ -40,7 +40,8 @@ import EmptyState from "@/components/empty-state";
 export default function Page() {
   const [search, setSearch] = useState("");
   const router = useRouter();
-  const studentId = localStorage.getItem("id");
+  const studentId =
+    typeof window !== "undefined" ? localStorage.getItem("id") : null;
 
   const searchParams = useSearchParams();
   const activityId = searchParams.get("activityId");
