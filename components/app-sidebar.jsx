@@ -22,6 +22,7 @@ import {
   FaVideo,
   FaGamepad,
   FaTrophy,
+  FaBullhorn,
 } from "react-icons/fa";
 
 import { NavMain } from "@/components/nav-main";
@@ -108,6 +109,7 @@ const sidebarItemsByRole = {
     { name: "Videos", url: "/videos", icon: FaVideo },
     { name: "Activities", url: "/activities", icon: FaGamepad },
     { name: "Leaderboard", url: "/leaderboard", icon: FaTrophy },
+    { name: "Announcement", url: "/announcement", icon: FaBullhorn },
   ],
   Teacher: [
     { name: "Home", url: "/home", icon: FaHome },
@@ -116,6 +118,7 @@ const sidebarItemsByRole = {
     { name: "Videos", url: "/videos", icon: FaVideo },
     { name: "Activities", url: "/activities", icon: FaGamepad },
     { name: "Leaderboard", url: "/leaderboard", icon: FaTrophy },
+    { name: "Announcement", url: "/announcement", icon: FaBullhorn },
   ],
   Student: [
     { name: "Home", url: "/home", icon: FaHome },
@@ -123,6 +126,7 @@ const sidebarItemsByRole = {
     { name: "Videos", url: "/videos", icon: FaVideo },
     { name: "Activities", url: "/activities", icon: FaGamepad },
     { name: "Leaderboard", url: "/leaderboard", icon: FaTrophy },
+    { name: "Announcement", url: "/announcement", icon: FaBullhorn },
   ],
 };
 
