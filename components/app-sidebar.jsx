@@ -21,6 +21,7 @@ import {
   FaBook,
   FaVideo,
   FaGamepad,
+  FaTrophy,
 } from "react-icons/fa";
 
 import { NavMain } from "@/components/nav-main";
@@ -106,6 +107,7 @@ const sidebarItemsByRole = {
     { name: "Lessons", url: "/modules", icon: FaBook },
     { name: "Videos", url: "/videos", icon: FaVideo },
     { name: "Activities", url: "/activities", icon: FaGamepad },
+    { name: "Leaderboard", url: "/leaderboard", icon: FaTrophy },
   ],
   Teacher: [
     { name: "Home", url: "/home", icon: FaHome },
@@ -113,12 +115,14 @@ const sidebarItemsByRole = {
     { name: "Lessons", url: "/modules", icon: FaBook },
     { name: "Videos", url: "/videos", icon: FaVideo },
     { name: "Activities", url: "/activities", icon: FaGamepad },
+    { name: "Leaderboard", url: "/leaderboard", icon: FaTrophy },
   ],
   Student: [
     { name: "Home", url: "/home", icon: FaHome },
     { name: "Lessons", url: "/modules", icon: FaBook },
     { name: "Videos", url: "/videos", icon: FaVideo },
     { name: "Activities", url: "/activities", icon: FaGamepad },
+    { name: "Leaderboard", url: "/leaderboard", icon: FaTrophy },
   ],
 };
 

@@ -105,7 +105,7 @@ function ActivityOverview() {
               {/* Thumbnail Image */}
               <div className="relative">
                 <img
-                  src="/module.png"
+                  src={"/module.png"}
                   alt="Activity Thumbnail"
                   className="w-48 h-32 object-cover rounded-lg"
                 />
@@ -137,63 +137,69 @@ function ActivityOverview() {
               </div>
             </div>
 
-            {/* Stats Section */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <Card className="p-4 text-center">
-                <p className="text-gray-500 text-sm">Average Score</p>
-                <p className="text-xl font-semibold">{averageScore}%</p>
-              </Card>
+            {role !== "Student" && (
+              <>
+                {/* Stats Section */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <Card className="p-4 text-center">
+                    <p className="text-gray-500 text-sm">Average Score</p>
+                    <p className="text-xl font-semibold">{averageScore}%</p>
+                  </Card>
 
-              <Card className="p-4 text-center">
-                <p className="text-gray-500 text-sm">Submissions</p>
-                <p className="text-xl font-semibold">{totalSubmissions}</p>
-              </Card>
-            </div>
+                  <Card className="p-4 text-center">
+                    <p className="text-gray-500 text-sm">Submissions</p>
+                    <p className="text-xl font-semibold">{totalSubmissions}</p>
+                  </Card>
+                </div>
 
-            {/* Learners Table */}
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Students</TableHead>
-                  <TableHead>Points</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {activity.StudentActivity?.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={2} className="text-center">
-                      No Students Taken The Activity Yet
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  activity.StudentActivity?.map((learner) => (
-                    <TableRow key={learner.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 text-gray-600 font-bold">
-                            {learner.student.firstName.charAt(0)}
-                          </div>
-                          <div>
-                            <p className="font-medium">
-                              {learner.student.firstName}{" "}
-                              {learner.student.lastName}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {learner.student.role}
-                            </p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="font-semibold text-gray-700">
-                          {learner.score} points
-                        </span>
-                      </TableCell>
+                {/* Learners Table */}
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Students</TableHead>
+                      <TableHead>Points</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {activity.StudentActivity?.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={2} className="text-center">
+                          No Students Taken The Activity Yet
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      [...activity.StudentActivity]
+                        .sort((a, b) => b.score - a.score) // Sort students by highest score
+                        .map((learner) => (
+                          <TableRow key={learner.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 text-gray-600 font-bold">
+                                  {learner.student.firstName.charAt(0)}
+                                </div>
+                                <div>
+                                  <p className="font-medium">
+                                    {learner.student.firstName}{" "}
+                                    {learner.student.lastName}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {learner.student.role}
+                                  </p>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <span className="font-semibold text-gray-700">
+                                {learner.score} points
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                    )}
+                  </TableBody>
+                </Table>
+              </>
+            )}
           </>
         )}
       </div>
