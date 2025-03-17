@@ -9,7 +9,11 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, Pencil, Star, Upload } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchUserById, updateProfilePicture } from "@/lib/api/users";
+import {
+  fetchUserById,
+  fetchUsers,
+  updateProfilePicture,
+} from "@/lib/api/users";
 import { useRouter, useSearchParams } from "next/navigation";
 import EmptyState from "@/components/empty-state";
 
@@ -60,6 +64,24 @@ function ProfilePage() {
       uploadMutation.mutate({ userId, file }); // Upload immediately
     }
   };
+
+  const { data: users, isLoading: isUsersLoading } = useQuery({
+    queryKey: ["leaderboard"],
+    queryFn: fetchUsers, // Fetch all users
+    enabled: !!user, // Fetch only when user data is available
+  });
+
+  // ✅ Filter only students and sort by expPoints (highest first)
+  const students =
+    users
+      ?.filter((u) => u.role === "Student")
+      .sort((a, b) => b.expPoints - a.expPoints) || [];
+
+  // ✅ Find the rank of the current user
+  const studentRank = students.findIndex((s) => s.id === user?.id) + 1; // Add 1 to avoid zero-based index
+
+  const lessonsTaken = user?.StudentLesson?.length || 0;
+  const activitiesTaken = user?.StudentActivity?.length || 0;
 
   return (
     <Body>
@@ -147,15 +169,26 @@ function ProfilePage() {
                 </div>
 
                 {/* Right Section: Rank & Leaderboard */}
-                {/* {role === "Student" && (
+                {role === "Student" && (
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-violet-900">5</p>
-                    <p className="text-gray-600 text-sm">#RANK</p>
-                    <Button className="mt-2 bg-primary text-white">
+                    {isUsersLoading ? (
+                      <p className="text-gray-600 text-sm">Loading rank...</p>
+                    ) : (
+                      <>
+                        <p className="text-2xl font-bold text-violet-900">
+                          {studentRank}
+                        </p>
+                        <p className="text-gray-600 text-sm">#RANK</p>
+                      </>
+                    )}
+                    <Button
+                      className="mt-2 bg-primary text-white"
+                      onClick={() => router.push("/leaderboard")}
+                    >
                       View Leaderboard
                     </Button>
                   </div>
-                )} */}
+                )}
               </div>
             </Card>
 
@@ -177,6 +210,28 @@ function ProfilePage() {
               //   </div>
               // </Card>
             }
+
+            {/* Stats Section */}
+            {role === "Student" && (
+              <Card className="p-4">
+                <h3 className="text-lg font-semibold mb-3">Progress</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <Card className="p-4 text-center">
+                    <p className="text-gray-500 text-sm">Lessons Taken</p>
+                    <p className="text-xl font-semibold">
+                      {user.StudentLesson.length || 0}
+                    </p>
+                  </Card>
+
+                  <Card className="p-4 text-center">
+                    <p className="text-gray-500 text-sm">
+                      Activities Completed
+                    </p>
+                    <p className="text-xl font-semibold">{activitiesTaken}</p>
+                  </Card>
+                </div>
+              </Card>
+            )}
 
             {/* Personal Information */}
             <Card className="p-4 relative">
