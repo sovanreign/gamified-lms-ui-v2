@@ -47,6 +47,7 @@ import ConfirmDialog from "@/components/confirm-dialog";
 import { toast } from "sonner";
 import { useDebounce } from "use-debounce";
 import dynamic from "next/dynamic";
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function Page() {
   const [search, setSearch] = useState("");
@@ -150,7 +151,7 @@ export default function Page() {
                         <img
                           src={
                             student.profileUrl
-                              ? student.profileUrl
+                              ? `${API_URL}/uploads${student.profileUrl}`
                               : student.gender == "Male"
                               ? "/profile-m.png"
                               : "/profile-w.png"
@@ -170,8 +171,11 @@ export default function Page() {
                       <TableCell>{student.gender}</TableCell>
                       <TableCell>{student.age}</TableCell>
                       <TableCell>
-                        {student.teacher?.firstName ||
-                          "No Assigned Teacher Yet"}
+                        {student.teacher?.firstName
+                          ? `${student.teacher.firstName} ${
+                              student.teacher.lastName || ""
+                            }`
+                          : "No Assigned Teacher Yet"}
                       </TableCell>
                       <TableCell className="text-right">
                         {/* Dropdown Menu for Actions */}

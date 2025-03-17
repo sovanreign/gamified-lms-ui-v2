@@ -21,6 +21,8 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 import { MoreHorizontal, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import notFound from "../../public/not-found.json";
@@ -138,7 +140,7 @@ export default function Page() {
                         <img
                           src={
                             teacher.profileUrl
-                              ? teacher.profileUrl
+                              ? `${API_URL}/uploads${teacher.profileUrl}`
                               : teacher.gender == "Male"
                               ? "/profile-m.png"
                               : "/profile-w.png"

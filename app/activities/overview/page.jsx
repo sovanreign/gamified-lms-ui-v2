@@ -21,6 +21,8 @@ import Header from "@/components/header";
 import EmptyState from "@/components/empty-state";
 import { Card } from "@/components/ui/card";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 const Body = dynamic(() => import("@/components/body"), { ssr: false });
 
 function ActivityOverview() {
@@ -174,16 +176,22 @@ function ActivityOverview() {
                           <TableRow key={learner.id}>
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 text-gray-600 font-bold">
-                                  {learner.student.firstName.charAt(0)}
-                                </div>
+                                <img
+                                  src={
+                                    learner.student.profileUrl
+                                      ? `${API_URL}/uploads${learner.student.profileUrl}`
+                                      : "/user.png"
+                                  }
+                                  alt={learner.username}
+                                  className="w-8 h-8 rounded-full border-4"
+                                />
                                 <div>
                                   <p className="font-medium">
                                     {learner.student.firstName}{" "}
                                     {learner.student.lastName}
                                   </p>
                                   <p className="text-xs text-gray-500">
-                                    {learner.student.role}
+                                    {learner.student.uniqueId}{" "}
                                   </p>
                                 </div>
                               </div>

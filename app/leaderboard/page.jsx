@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/table";
 import { FaCrown } from "react-icons/fa";
 import { Loader2 } from "lucide-react";
-
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const Body = dynamic(() => import("@/components/body"), { ssr: false });
 
 // Medal Colors
@@ -99,7 +99,11 @@ export default function LeaderboardPage() {
 
                 {/* User Avatar */}
                 <img
-                  src={user.profileUrl || "/user.png"}
+                  src={
+                    user.profileUrl
+                      ? `${API_URL}/uploads${user.profileUrl}`
+                      : "/user.png"
+                  }
                   alt={user.username}
                   className="w-20 h-20 rounded-full border-4"
                 />
@@ -131,10 +135,19 @@ export default function LeaderboardPage() {
                   {/* Player Info */}
                   <TableCell className="flex items-center gap-3">
                     {/* Avatar Placeholder */}
-                    <div className="w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center text-white text-xl font-semibold">
-                      {user.username.charAt(0)}
-                    </div>
-                    <p>{user.username}</p>
+                    <img
+                      src={
+                        user.profileUrl
+                          ? `${API_URL}/uploads${user.profileUrl}`
+                          : "/user.png"
+                      }
+                      alt={user.username}
+                      className="w-8 h-8 rounded-full border-4"
+                    />
+
+                    <p>
+                      {user.firstName} {user.lastName}
+                    </p>
                   </TableCell>
 
                   {/* Score */}
