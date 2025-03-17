@@ -94,7 +94,7 @@ export default function Page() {
                 >
                   <CardHeader className="relative p-0">
                     <img
-                      src={activity.image || "/module.png"}
+                      src={activity.imageUrl || "/module.png"}
                       alt={activity.name}
                       className="w-full h-32 object-cover rounded-t-lg"
                     />
