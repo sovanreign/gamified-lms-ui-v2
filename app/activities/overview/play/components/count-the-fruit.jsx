@@ -98,7 +98,7 @@ export default function CountTheFruit() {
       sendScoreMutation.mutate({
         studentId: String(studentId), // Ensure it's a string
         activityId: String(activityId), // Ensure it's a string
-        score: (score += 1),
+        score: score + 1,
       });
     }
   };

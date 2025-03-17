@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/table";
 import Header from "@/components/header";
 import EmptyState from "@/components/empty-state";
+import { Card } from "@/components/ui/card";
 
 const Body = dynamic(() => import("@/components/body"), { ssr: false });
 
@@ -50,6 +51,17 @@ function ActivityOverview() {
     queryFn: () => fetchActivityById(activityId),
     enabled: !!activityId,
   });
+
+  const totalSubmissions = activity?.StudentActivity?.length || 0;
+  const averageScore =
+    totalSubmissions > 0
+      ? (
+          activity.StudentActivity.reduce(
+            (sum, entry) => sum + entry.score,
+            0
+          ) / totalSubmissions
+        ).toFixed(2) // Round to 2 decimal places
+      : 0;
 
   const filteredLearners =
     activity?.learners?.filter((learner) =>
@@ -125,6 +137,19 @@ function ActivityOverview() {
               </div>
             </div>
 
+            {/* Stats Section */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <Card className="p-4 text-center">
+                <p className="text-gray-500 text-sm">Average Score</p>
+                <p className="text-xl font-semibold">{averageScore}%</p>
+              </Card>
+
+              <Card className="p-4 text-center">
+                <p className="text-gray-500 text-sm">Submissions</p>
+                <p className="text-xl font-semibold">{totalSubmissions}</p>
+              </Card>
+            </div>
+
             {/* Learners Table */}
             <Table>
               <TableHeader>
@@ -150,7 +175,8 @@ function ActivityOverview() {
                           </div>
                           <div>
                             <p className="font-medium">
-                              {learner.student.firstName}
+                              {learner.student.firstName}{" "}
+                              {learner.student.lastName}
                             </p>
                             <p className="text-xs text-gray-500">
                               {learner.student.role}

@@ -86,7 +86,7 @@ export default function FindMissingLetter() {
       sendScoreMutation.mutate({
         studentId: studentId,
         activityId: activityId,
-        score: (score += 1),
+        score: score + 1,
       });
     }
   };
