@@ -27,6 +27,12 @@ function ActivityOverview() {
   const router = useRouter();
   const [studentId, setStudentId] = useState(null);
 
+  const [role, setRole] = useState(null);
+
+  useEffect(() => {
+    setRole(localStorage.getItem("role"));
+  }, []);
+
   useEffect(() => {
     const id = localStorage.getItem("id");
     setStudentId(id);
@@ -94,18 +100,19 @@ function ActivityOverview() {
 
                 <Button
                   className={`absolute inset-0 flex items-center justify-center ${
-                    isCompleted
+                    isCompleted || role === "Admin"
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-black/50 hover:bg-black/70"
                   } text-white transition`}
                   size="lg"
                   onClick={() =>
                     !isCompleted &&
+                    role !== "Admin" &&
                     router.push(
                       `/activities/overview/play?activityId=${activity.id}`
                     )
                   }
-                  disabled={isCompleted}
+                  disabled={isCompleted || role !== "Student"}
                 >
                   {isCompleted ? (
                     "Completed"
