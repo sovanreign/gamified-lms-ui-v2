@@ -13,10 +13,10 @@ export default function Page() {
       <div className="bg-primary flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
           <a className="flex items-center gap-2 font-medium">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md  text-primary-foreground">
-              <Image src="/logo.png" width="48" height="48" alt="logo" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-md  text-primary-foreground">
+              <Image src="/logo.png" width="64" height="64" alt="logo" />
             </div>
-            <span className="font-semibold text-white text-sm">
+            <span className="font-semibold text-white">
               Malasiqui Adventist School
             </span>
           </a>
