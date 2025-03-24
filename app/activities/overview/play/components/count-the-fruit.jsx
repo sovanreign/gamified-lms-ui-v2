@@ -72,6 +72,7 @@ export default function CountTheFruit() {
   });
 
   const handleCheckAnswer = () => {
+    if (inputValue.trim() === "") return;
     const isCorrect = parseInt(inputValue) === count;
 
     if (isCorrect) {
@@ -79,10 +80,12 @@ export default function CountTheFruit() {
     }
 
     setShowResult(isCorrect); // ✅ Set correct/incorrect state
-    setTimeout(() => handleNextFruit(), 1500); // ✅ Delay before next fruit
+    setTimeout(() => handleNextFruit(isCorrect), 1500); // ✅ Delay before next fruit
   };
 
-  const handleNextFruit = () => {
+  const handleNextFruit = (wasCorrect) => {
+    const finalScore = wasCorrect ? score + 1 : score;
+
     setInputValue("");
     setShowResult(null); // ✅ Reset result state
 
@@ -98,7 +101,7 @@ export default function CountTheFruit() {
       sendScoreMutation.mutate({
         studentId: String(studentId), // Ensure it's a string
         activityId: String(activityId), // Ensure it's a string
-        score: score + 1,
+        score: finalScore,
       });
     }
   };
@@ -152,6 +155,7 @@ export default function CountTheFruit() {
             onChange={(e) => setInputValue(e.target.value)}
             className="w-32 mx-auto text-center text-lg"
             placeholder="Enter number"
+            required
             disabled={showResult !== null}
           />
 

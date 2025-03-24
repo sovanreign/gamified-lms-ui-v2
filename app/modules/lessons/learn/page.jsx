@@ -26,6 +26,11 @@ import dynamic from "next/dynamic";
 const Lesson1 = dynamic(() => import("./components/lesson1"), { ssr: false });
 const Lesson2 = dynamic(() => import("./components/lesson2"), { ssr: false });
 const Lesson3 = dynamic(() => import("./components/lesson3"), { ssr: false });
+const Lesson4 = dynamic(() => import("./components/lesson4"), { ssr: false });
+const Lesson5 = dynamic(() => import("./components/lesson5"), { ssr: false });
+const Lesson6 = dynamic(() => import("./components/lesson6"), { ssr: false });
+const Lesson7 = dynamic(() => import("./components/lesson7"), { ssr: false });
+const Lesson8 = dynamic(() => import("./components/lesson8"), { ssr: false });
 
 function LearnPage() {
   const searchParams = useSearchParams();
@@ -93,6 +98,16 @@ function LearnPage() {
         return <Lesson2 />;
       case "lesson3":
         return <Lesson3 />;
+      case "lesson4":
+        return <Lesson4 />;
+      case "lesson5":
+        return <Lesson5 />;
+      case "lesson6":
+        return <Lesson6 />;
+      case "lesson7":
+        return <Lesson7 />;
+      case "lesson8":
+        return <Lesson8 />;
       default:
         return <Template />;
     }

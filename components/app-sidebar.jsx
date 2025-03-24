@@ -141,8 +141,8 @@ export function AppSidebar({ ...props }) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <a href="#">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg  text-sidebar-primary-foreground">
-                  <Image src="/logo.png" width={32} height={32} alt="logo" />
+                <div className="flex aspect-square  items-center justify-center rounded-lg  text-sidebar-primary-foreground">
+                  <Image src="/logo.png" width={48} height={48} alt="logo" />
                 </div>
                 <div className="grid flex-1 text-left text-xs leading-tight">
                   <span className="truncate font-semibold">
